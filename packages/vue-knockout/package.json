@@ -1,0 +1,10 @@
+{
+  "name": "vue-knockout",
+  "version": "0.0.1",
+  "devDependencies": {
+    "vue": "~3.4.11"
+  },
+  "peerDependencies": {
+    "vue": ">=3.2"
+  }
+}
