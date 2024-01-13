@@ -1,6 +1,6 @@
 {
   "name": "vue-knockout",
-  "version": "0.0.1",
+  "version": "1.0.0-alpha.1",
   "devDependencies": {
     "vue": "~3.4.11"
   },
