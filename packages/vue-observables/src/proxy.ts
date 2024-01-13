@@ -2,32 +2,27 @@
 import {
   type Ref,
   type ComputedRef,
-  type WritableComputedRef
+  type WritableComputedRef,
+  ReactiveFlags,
+  watch
 } from 'vue'
-import { type refWithControl } from '@vueuse/core'
+import { type Subscribable } from '.'
 
-const WRITABLE = Symbol('writable')
+export const COMPUTED = Symbol('computed')
+export const SUBSCRIBERS = Symbol('subscribers')
 
-export type ControlledRef<T> = ReturnType<typeof refWithControl<T>>
-export type RefLike<T> = ControlledRef<T> | ComputedRef<T> | WritableComputedRef<T>
+export type RefLike<T> = ComputedRef<T> | WritableComputedRef<T>
 
-type ProxyReturn<T> =
-  T extends ControlledRef<infer U>
-    ? ControlledRef<U>
-    : T extends ComputedRef<infer U>
-      ? ComputedRef<U>
-      : T extends WritableComputedRef<infer U>
-        ? WritableComputedRef<U>
-        : never
 /**
  * Mimics Knockout's API for getting / setting
  */
 export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   vueObj: V,
-  writable: boolean = true
+  computed: boolean = false
 ) => {
   function setValue(value: any) {
-    if (writable) {
+    if (!(vueObj as any)[ReactiveFlags.IS_READONLY]) {
       (vueObj as Ref).value = value
     } else {
       throw new Error('Cannot set value on a read-only observable')
@@ -43,8 +38,29 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
     setValue(value)
   }
 
-  Object.defineProperty(getterSetter, WRITABLE, {
-    value: writable
+  function subscribe(
+    callback: (newValue: T) => void,
+    callbackTarget?: any,
+    // ?
+    event?: string
+  ) {
+    if (callbackTarget) {
+      callback = callback.bind(callbackTarget)
+    }
+    const handle = watch(vueObj, callback)
+    ;(getterSetter as any)[SUBSCRIBERS].add(handle)
+  }
+
+  Object.defineProperties(getterSetter, {
+    [SUBSCRIBERS]: {
+      value: new Set()
+    },
+    [COMPUTED]: {
+      value: computed
+    },
+    subscribe: {
+      value: subscribe
+    }
   })
 
   const proxyHandler: ProxyHandler<any> = {
@@ -56,6 +72,10 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
         return function(thisVal: any) {
           return new Proxy(getterSetter.bind(thisVal), proxyHandler)
         }
+      }
+      if (p === 'peek') {
+        /** Peek at the private Vue value */
+        return () => (vueObj as any)._value
       }
       /**
        * Return all Vue ref properties, so that they
@@ -88,5 +108,5 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
     }
   }
 
-  return new Proxy(getterSetter, proxyHandler) as ProxyReturn<V>
+  return new Proxy(getterSetter, proxyHandler) as Subscribable<T>
 }
