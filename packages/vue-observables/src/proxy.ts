@@ -3,12 +3,13 @@ import {
   type Ref,
   type ComputedRef,
   type WritableComputedRef,
-  ReactiveFlags,
   watch
 } from 'vue'
 import { type Subscribable } from '.'
+import { ReactiveFlags } from './constants'
 
 export const COMPUTED = Symbol('computed')
+export const OBSERVABLE = Symbol('observable')
 export const SUBSCRIBERS = Symbol('subscribers')
 
 export type RefLike<T> = ComputedRef<T> | WritableComputedRef<T>
@@ -55,6 +56,9 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
     [SUBSCRIBERS]: {
       value: new Set()
     },
+    [OBSERVABLE]: {
+      value: true
+    },
     [COMPUTED]: {
       value: computed
     },
@@ -76,6 +80,9 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
       if (p === 'peek') {
         /** Peek at the private Vue value */
         return () => (vueObj as any)._value
+      }
+      if (p === 'getDependenciesCount') {
+        return () => (vueObj as any).dep?.size ?? 0
       }
       /**
        * Return all Vue ref properties, so that they

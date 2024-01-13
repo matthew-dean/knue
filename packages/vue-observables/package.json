@@ -2,6 +2,15 @@
   "name": "vue-observables",
   "version": "0.0.1",
   "description": "Knockout-like functional syntax for Vue.js",
+  "scripts": {
+    "ci": "pnpm build && pnpm test",
+    "prepublishOnly": "npm run build",
+    "build": "pnpm compile",
+    "compile": "tsc -b tsconfig.build.json",
+    "test": "cross-env TEST=true vitest --watch=false",
+    "lint:fix": "eslint --fix '**/*.{js,ts}'",
+    "lint": "eslint '**/*.{js,ts}'"
+  },
   "devDependencies": {
     "vue": "~3.4.11"
   },

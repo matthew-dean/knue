@@ -2,6 +2,8 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
-    // ... Specify options here.
+    name: 'vue-observables',
+    watch: false,
+    include: ['src/__tests__/**/*.ts']
   }
 })

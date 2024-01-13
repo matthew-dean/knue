@@ -7,22 +7,24 @@ import {
   type WritableComputedOptions,
   type DebuggerOptions,
   type WritableComputedRef,
-  type ComputedSetter,
-  ReactiveFlags
+  type ComputedSetter
 } from 'vue'
 import type { RefLike } from './proxy'
-import { getProxy, COMPUTED } from './proxy'
+import { getProxy, COMPUTED, OBSERVABLE } from './proxy'
+import { ReactiveFlags } from './constants'
 
 export interface Subscribable<T> {
   (): T
   subscribe(callback: (newValue: T) => void): () => void
   peek(): T
+  getDependenciesCount(): number
 }
+export type Writable<T> = (value: T) => void
 
-export interface Observable<T> extends Subscribable<T>, Ref<T> {}
+export interface Observable<T> extends Subscribable<T>, Writable<T>, Ref<T> {}
 export interface ObservableArray<T> extends Observable<T[]> {}
 export interface Computed<T> extends Subscribable<T>, ComputedRef<T> {}
-export interface WritableComputed<T> extends Subscribable<T>, WritableComputedRef<T> {}
+export interface WritableComputed<T> extends Subscribable<T>, Writable<T>, WritableComputedRef<T> {}
 
 export function observable<T>(): Observable<T | undefined>
 export function observable<T>(value: T): Observable<T>
@@ -67,7 +69,7 @@ export function computed<T>(options: ComputedGetter<T> | WriteableOptions<T>, de
   // let com: ComputedRef<T> | WritableComputedRef<T>
   if (typeof options === 'function') {
     const com = vueComputed(options, debugOptions) as RefLike<T>
-    return getProxy<T>(com) as Computed<T>
+    return getProxy<T>(com, true) as Computed<T>
   }
   let get = 'read' in options ? options.read : options.get
   if ('owner' in options) {
@@ -82,20 +84,20 @@ export function computed<T>(options: ComputedGetter<T> | WriteableOptions<T>, de
     ? getProxy<T>(vueComputed({
       get,
       set
-    }, debugOptions)) as WritableComputed<T>
-    : getProxy<T>(vueComputed(get, debugOptions)) as Computed<T>
+    }, debugOptions), true) as WritableComputed<T>
+    : getProxy<T>(vueComputed(get, debugOptions), true) as Computed<T>
 }
 
 export function isObservable(obj: any): obj is Observable<any> {
-  return obj && ReactiveFlags.RAW in obj
+  return obj && OBSERVABLE in obj
 }
 
 export function isWritableObservable(obj: any): obj is Observable<any> | WritableComputed<any> {
-  return isObservable(obj) && !(ReactiveFlags.IS_READONLY in obj)
+  return isObservable(obj) && !(obj as any)[ReactiveFlags.IS_READONLY]
 }
 
 export function isComputed(obj: any): obj is Computed<any> {
-  return obj && COMPUTED in obj
+  return Boolean(obj?.[COMPUTED])
 }
 
 export {
