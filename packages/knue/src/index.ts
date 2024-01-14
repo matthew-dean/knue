@@ -18,7 +18,7 @@ export interface VueKnockoutSubscribable<T> {
 
 export interface Subscribable<T> extends O.Subscribable<T> {}
 
-function VueKnockout() {
+function Knue(...args: any[]) {
   function observable<T>(): O.Observable<T | undefined>
   function observable<T>(value: T): O.Observable<T>
   function observable<T>(value?: T) {
@@ -77,9 +77,13 @@ function VueKnockout() {
   }
 }
 
-const VueKnock = VueKnockout as Class<typeof VueKnockout, []> & typeof VueKnockout
+/** Allow `new` keyword */
+const VueKnockout = Knue as unknown as {
+  new(): ReturnType<typeof Knue>
+  (): ReturnType<typeof Knue>
+}
 export {
-  VueKnock as VueKnockout
+  VueKnockout as default
 }
 
-export default VueKnockout()
+// export default VueKnockout()

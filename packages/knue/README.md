@@ -1,4 +1,4 @@
-# vue-knockout
+# Knue - Knockout, powered by Vue
 
 (WARNING: Not production ready, still in alpha. Open issues if you have a particular Knockout API you need.)
 
@@ -9,7 +9,7 @@ Drop-in replacement for much of the Knockout API, but backed with Vue. Useful fo
 Root object
 
 ```ts
-import ko from 'vue-knockout'
+import ko from 'knue'
 ```
 
 API
@@ -20,7 +20,7 @@ API
   **Observable**
 
   ```ts
-  import ko from 'vue-knockout'
+  import ko from 'knue'
 
   const foo = ko.observable(1)
   ```
@@ -28,7 +28,7 @@ API
   or:
 
   ```ts
-  import { observable } from 'vue-knockout'
+  import { observable } from 'knue'
 
   const foo = observable(1)
   ```
@@ -36,7 +36,7 @@ API
   **ObservableArray**
 
   ```ts
-  import ko from 'vue-knockout'
+  import ko from 'knue'
 
   const foo = ko.observableArray<string>()
   console.log(foo()) // []
@@ -46,7 +46,7 @@ API
   **Computed**
 
   ```ts
-  import ko, { computed } from 'vue-knockout'
+  import ko, { computed } from 'knue'
 
   const co1 = ko.computed(() => 1)
   const co2 = computed(() => co1() + 1)
