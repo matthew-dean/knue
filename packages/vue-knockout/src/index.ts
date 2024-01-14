@@ -1,11 +1,14 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import * as O from 'vue-observables'
+import { type Class } from 'type-fest'
 
 export type * from 'vue-observables'
 export type Extender<T extends O.Subscribable<any> = any, O = any> = (target: T, options: O) => T
 
+export type AllModules = 'extenders' | 'mapping'
+
 export interface VueKnockoutModule {
-  name: 'extenders' | 'mapping'
+  name: AllModules
   init(): Record<string, any>
 }
 
@@ -15,46 +18,68 @@ export interface VueKnockoutSubscribable<T> {
 
 export interface Subscribable<T> extends O.Subscribable<T> {}
 
-export class VueKnockout {
-  // observable<T>(): O.Observable<T | undefined>
-  // observable<T>(value: T): O.Observable<T>
-  // observable<T>(value?: T) {
-  //   return this.addExtend(arguments.length === 0 ? O.observable<T>() : O.observable<T>(value!))
-  // }
-
-  // private addExtend<T>(subscribable: T) {
-  //   (subscribable as any).extend = (extender: Extender<T>) => {}
-  //   return subscribable
-  // }
-  observable = O.observable
-  observableArray = O.observableArray
-  computed = O.computed
-  pureComputed = O.pureComputed
-  isObservable = O.isObservable
-  isWritableObservable = O.isWritableObservable
-  isComputed = O.isComputed
-  isPureComputed = O.isPureComputed
-
-  _extenders: Record<string, Extender> | undefined
-  _mapping: Record<string, any> | undefined
-
-  get extenders(): Record<string, Extender> {
-    if (!this._extenders) {
-      throw new Error('Extenders module has not been added.')
-    }
-    return this._extenders
+function VueKnockout() {
+  function observable<T>(): O.Observable<T | undefined>
+  function observable<T>(value: T): O.Observable<T>
+  function observable<T>(value?: T) {
+    return attachExtend(arguments.length === 0 ? O.observable<T>() : O.observable<T>(value!))
   }
 
-  get mapping(): Record<string, any> {
-    if (!this._extenders) {
-      throw new Error('Mapping module has not been added.')
-    }
-    return this._extenders
+  function extend<T extends O.Subscribable<any>, O = any>(target: T, options: O): T {
+
   }
 
-  use(module: VueKnockoutModule) {
-    this[`_${module.name}`] = module.init()
+  function attachExtend<T>(subscribable: T) {
+    (subscribable as any).extend = (extender: Extender<T>) => {}
+    return subscribable
+  }
+  // observable = O.observable
+  // observableArray = O.observableArray
+  // computed = O.computed
+  // pureComputed = O.pureComputed
+  // isObservable = O.isObservable
+  // isWritableObservable = O.isWritableObservable
+  // isComputed = O.isComputed
+  // isPureComputed = O.isPureComputed
+
+  const modules: {
+    _extenders?: Record<string, Extender>
+    _mapping?: Record<string, any>
+  } = {}
+
+  function use(module: VueKnockoutModule) {
+    modules[`_${module.name}`] = module.init()
+  }
+
+  return {
+    observable,
+    observableArray: O.observableArray,
+    computed: O.computed,
+    pureComputed: O.pureComputed,
+    isObservable: O.isObservable,
+    isWritableObservable: O.isWritableObservable,
+    isComputed: O.isComputed,
+    isPureComputed: O.isPureComputed,
+    use,
+    get extenders(): Record<string, Extender> {
+      if (!modules._extenders) {
+        throw new Error('Extenders module has not been added.')
+      }
+      return modules._extenders
+    },
+
+    get mapping(): Record<string, any> {
+      if (!modules._extenders) {
+        throw new Error('Mapping module has not been added.')
+      }
+      return modules._extenders
+    }
   }
 }
 
-export default new VueKnockout()
+const VueKnock = VueKnockout as Class<typeof VueKnockout, []> & typeof VueKnockout
+export {
+  VueKnock as VueKnockout
+}
+
+export default VueKnockout()
