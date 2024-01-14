@@ -9,7 +9,9 @@ Drop-in replacement for much of the Knockout API, but backed with Vue. Useful fo
 Root object
 
 ```ts
-import ko from 'knue'
+import Knue from 'knue'
+
+const ko = new Knue()
 ```
 
 API
@@ -20,15 +22,15 @@ API
   **Observable**
 
   ```ts
-  import ko from 'knue'
+  const ko = new Knue()
 
   const foo = ko.observable(1)
   ```
 
-  or:
+  Or, methods can be destructured, like:
 
   ```ts
-  import { observable } from 'knue'
+  const { observable } = new Knue()
 
   const foo = observable(1)
   ```
@@ -36,8 +38,6 @@ API
   **ObservableArray**
 
   ```ts
-  import ko from 'knue'
-
   const foo = ko.observableArray<string>()
   console.log(foo()) // []
   ```
@@ -46,8 +46,6 @@ API
   **Computed**
 
   ```ts
-  import ko, { computed } from 'knue'
-
   const co1 = ko.computed(() => 1)
   const co2 = computed(() => co1() + 1)
   console.log(co1()) // 1

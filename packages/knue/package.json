@@ -1,6 +1,6 @@
 {
   "name": "knue",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-alpha.3",
   "description": "Drop-in replacement for much of the Knockout API, but backed with Vue.",
   "license": "MIT",
   "main": "./dist/index.js",
