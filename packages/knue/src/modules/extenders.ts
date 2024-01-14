@@ -1,7 +1,8 @@
 import {
-  Knue
+  Knue,
+  type Subscribable,
+  type KnueOptions
 } from '../knue'
-import { type Subscribable } from 'vue-observables'
 
 declare module '../knue' {
   // interface Knue<Opts extends KnueOptions> {
@@ -14,8 +15,15 @@ declare module '../knue' {
   //   isComputed: typeof O.isComputed
   //   isPureComputed: typeof O.isPureComputed
   // }
-  interface Knue<Opts extends KnueOptions> {
-    observable: Knue<Opts>['observable'] & { foo: string }
+  interface Subscribable<T> {
+    foo: string
   }
+  // interface Knue<Opts extends KnueOptions> {
+  //   observable: Knue<Opts>['observable'] & { foo: string }
+  // }
 }
-Knue.prototype.constructor = () => {}
+
+const existingConstructor = Knue.prototype.constructor
+Knue.prototype.constructor = <Opts extends KnueOptions>(opts?: Opts) => {
+  const returnVal = existingConstructor(opts)
+}

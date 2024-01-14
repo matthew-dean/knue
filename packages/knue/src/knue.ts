@@ -1,8 +1,11 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import * as O from 'vue-observables'
-import { type Subscribable } from 'vue-observables'
 
-export type * from 'vue-observables'
+export interface Subscribable<T> extends O.Subscribable<T> {}
+export interface Observable<T> extends O.Observable<T> {}
+export interface ObservableArray<T> extends O.ObservableArray<T> {}
+export interface Computed<T> extends O.Computed<T> {}
+
 // export type Extender<T extends O.Subscribable<any> = any, O = any> = (target: T, options: O) => T
 
 // export type AllModules = 'extenders' | 'mapping'
