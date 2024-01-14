@@ -1,7 +1,7 @@
 import { describe, test, expect, vi } from 'vitest'
-import Knue from '..'
+import Knue from '../index'
 
-const ko = Knue()
+const ko = new Knue()
 
 /**
  * @note - We shouldn't have to test observable behavior,

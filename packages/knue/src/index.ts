@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import * as O from 'vue-observables'
-import { type Class } from 'type-fest'
 
 export type * from 'vue-observables'
 export type Extender<T extends O.Subscribable<any> = any, O = any> = (target: T, options: O) => T
@@ -22,17 +21,18 @@ function Knue(...args: any[]) {
   function observable<T>(): O.Observable<T | undefined>
   function observable<T>(value: T): O.Observable<T>
   function observable<T>(value?: T) {
-    return attachExtend(arguments.length === 0 ? O.observable<T>() : O.observable<T>(value!))
+    return arguments.length === 0 ? O.observable<T>() : O.observable<T>(value!)
+    // return attachExtend(arguments.length === 0 ? O.observable<T>() : O.observable<T>(value!))
   }
 
-  function extend<T extends O.Subscribable<any>, O = any>(target: T, options: O): T {
+  // function extend<T extends O.Subscribable<any>, O = any>(target: T, options: O): T {
 
-  }
+  // }
 
-  function attachExtend<T>(subscribable: T) {
-    (subscribable as any).extend = (extender: Extender<T>) => {}
-    return subscribable
-  }
+  // function attachExtend<T>(subscribable: T) {
+  //   (subscribable as any).extend = (extender: Extender<T>) => {}
+  //   return subscribable
+  // }
   // observable = O.observable
   // observableArray = O.observableArray
   // computed = O.computed
