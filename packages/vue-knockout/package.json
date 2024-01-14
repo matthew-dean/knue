@@ -1,10 +1,38 @@
 {
   "name": "vue-knockout",
   "version": "1.0.0-alpha.1",
+  "description": "Drop-in replacement for much of the Knockout API, but backed with Vue.",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "ci": "pnpm build && pnpm test",
+    "prepublishOnly": "npm run build",
+    "build": "pnpm compile",
+    "compile": "tsc -b tsconfig.build.json",
+    "test": "cross-env TEST=true vitest --watch=false",
+    "lint:fix": "eslint --fix '**/*.{js,ts}'",
+    "lint": "eslint '**/*.{js,ts}'"
+  },
   "devDependencies": {
+    "knockout": "~3.5.1",
+    "type-fest": "~4.9.0",
     "vue": "~3.4.11"
   },
   "peerDependencies": {
     "vue": ">=3.2"
+  },
+  "dependencies": {
+    "vue-observables": "workspace:*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/matthew-dean/vue-knockout.git"
+  },
+  "bugs": {
+    "url": "https://github.com/matthew-dean/vue-knockout/issues"
   }
 }

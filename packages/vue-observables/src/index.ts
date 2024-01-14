@@ -47,7 +47,7 @@ export function observableArray<T>(value: T[] = []): ObservableArray<T> {
   return getProxy(vueObj) as ObservableArray<T>
 }
 
-interface WritableKnockoutOptions<T> {
+export interface WritableKnockoutOptions<T> {
   read: ComputedGetter<T>
   write?: ComputedSetter<T>
   owner?: any
@@ -61,7 +61,7 @@ interface WritableKnockoutOptions<T> {
   disposeWhenNodeIsRemoved?: any
 }
 
-type WriteableOptions<T> = WritableKnockoutOptions<T> | WritableComputedOptions<T>
+export type WriteableOptions<T> = WritableKnockoutOptions<T> | WritableComputedOptions<T>
 
 export function computed<T>(getter: ComputedGetter<T>, debugOptions?: DebuggerOptions): Computed<T>
 export function computed<T>(options: WriteableOptions<T>, debugOptions?: DebuggerOptions): WritableComputed<T>
