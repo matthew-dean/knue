@@ -13,6 +13,10 @@ export interface Computed<T> extends O.Computed<T> {}
 export interface KnueModule {
   name: string
   init(obj: KnueType<KnueOptions>): KnueType<KnueOptions>
+  /**
+   * Modules must redefine the implementation of
+   * all the methods they override.
+   */
   __impl: Record<string, any>
 }
 
@@ -81,9 +85,9 @@ type GetReturn<
   OptsKey extends keyof Opts[ModKey]['__impl'] = keyof Opts[ModKey]['__impl']
 >
   = Opts extends KnueOptions
-    ? {
-        [K in OptsKey]: Opts[ModKey]['__impl'][K]
-      }
+    ? Omit<T, keyof Opts[ModKey]['__impl']> & {
+      [K in OptsKey]: Opts[ModKey]['__impl'][K]
+    }
     : T
 
 type KnueType<Opts extends KnueOptions> = ReturnType<typeof Knue<Opts>>

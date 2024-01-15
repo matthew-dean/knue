@@ -13,8 +13,8 @@ import { type Observable } from 'vue-observables'
 export interface ExtendersModule extends KnueModule {
   __impl: {
     observable: {
-      <T>(): Observable<T> & string
-      <T>(value: T): Observable<T>
+      <T>(): Observable<T | undefined> & { foo: 'bar' }
+      <T>(value: T): Observable<T> & { foo: 'bar' }
     }
   }
 }
