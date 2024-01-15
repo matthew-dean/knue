@@ -1,29 +1,45 @@
+// /* eslint-disable @typescript-eslint/no-misused-new, @typescript-eslint/prefer-function-type, @typescript-eslint/no-unused-vars */
+// import {
+//   Knue,
+//   // type Subscribable,
+//   type KnueOptions
+// } from '../knue'
+
 import {
-  Knue,
-  type Subscribable,
-  type KnueOptions
+  type KnueModule
 } from '../knue'
+import { type Observable } from 'vue-observables'
 
-declare module '../knue' {
-  // interface Knue<Opts extends KnueOptions> {
-  //   observable: typeof O.observable
-  //   observableArray: typeof O.observableArray
-  //   computed: typeof O.computed
-  //   pureComputed: typeof O.pureComputed
-  //   isObservable: typeof O.isObservable
-  //   isWritableObservable: typeof O.isWritableObservable
-  //   isComputed: typeof O.isComputed
-  //   isPureComputed: typeof O.isPureComputed
-  // }
-  interface Subscribable<T> {
-    foo: string
+export interface ExtendersModule extends KnueModule {
+  __impl: {
+    observable: {
+      <T>(): Observable<T> & string
+      <T>(value: T): Observable<T>
+    }
   }
-  // interface Knue<Opts extends KnueOptions> {
-  //   observable: Knue<Opts>['observable'] & { foo: string }
-  // }
 }
 
-const existingConstructor = Knue.prototype.constructor
-Knue.prototype.constructor = <Opts extends KnueOptions>(opts?: Opts) => {
-  const returnVal = existingConstructor(opts)
-}
+export const extenders = {
+  name: 'extenders',
+  init(obj) {
+    return obj
+  }
+} as ExtendersModule
+
+// declare module '../knue' {
+//   interface Subscribable<T> {
+//     foo: string
+//   }
+//   interface Observable<T> extends Subscribable<T> {}
+
+//   interface Knue<Opts extends KnueOptions> {
+//     new(opts?: Opts): Knue<Opts>
+//   }
+// }
+
+// (function() {
+//   const existingConstructor = Knue.prototype.constructor
+//   Knue.prototype.constructor = <Opts extends KnueOptions>(opts?: Opts) => {
+//     const returnVal = existingConstructor(opts)
+//   }
+// })()

@@ -1,7 +1,9 @@
 import { describe, test, expect, vi } from 'vitest'
 import Knue from '..'
+// import '../modules/extenders'
+import { extenders } from '../modules/extenders'
 
-const ko = Knue()
+const ko = new Knue({ extenders })
 
 /**
  * @note - We shouldn't have to test observable behavior,
@@ -10,6 +12,7 @@ const ko = Knue()
 describe('sanity check', () => {
   test('observable', () => {
     const obs = ko.observable(1)
+    console.log(obs.foo)
     expect(obs()).toBe(1)
   })
 
