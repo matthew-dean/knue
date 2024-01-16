@@ -9,3 +9,5 @@ export const enum ReactiveFlags {
   IS_SHALLOW = '__v_isShallow',
   RAW = '__v_raw'
 }
+
+export const EXTENDERS_KEY = '__extenders'

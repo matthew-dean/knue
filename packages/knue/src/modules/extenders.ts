@@ -6,25 +6,59 @@
 // } from '../knue'
 
 import {
-  type KnueModule
+  type KnuePlugin,
+  type Extenders
 } from '../knue'
-import { type Observable } from 'vue-observables'
+import {
+  type Observable,
+  type Subscribable,
+  EXTENDERS_KEY
+} from 'vue-observables'
 
-export interface ExtendersModule extends KnueModule {
-  __impl: {
-    observable: {
-      <T>(): Observable<T | undefined> & { foo: 'bar' }
-      <T>(value: T): Observable<T> & { foo: 'bar' }
+// type ExtendSubscribable<T extends SubscribableFn, Opts> =
+//   Opts extends KnueOptions
+//     ? {
+//       [K in keyof T]: T[K] &
+//     }
+//     : T
+//       /** Extenders are enabled */
+//       : Opts extends { extenders: Extenders }
+//         ? T & {
+//           extend<P extends ExtendProps<Opts>>(props: P): ExtendReturn<P>
+//         }
+//         : T
+//     : T
+
+export type ExtendersModule = KnuePlugin
+
+export type Extensions<T extends Extenders> = ReturnType<KnuePlugin> & T
+/**
+ * @param extensions
+ *  e.g. {
+ *     numericText: (target: Subscribable<any>, data?: any) => {
+ *     }
+ *  }
+ */
+export const extenders: ExtendersModule = <E extends Extenders>(
+  extensions?: E
+) => ({
+    name: 'extenders',
+    init(obj) {
+      obj.observable[EXTENDERS_KEY].push({
+        extend(this: Subscribable<any>, props: Record<string, any>) {
+          // eslint-disable-next-line @typescript-eslint/no-this-alias
+          let returnVal: any = this
+          for (const [key, value] of Object.entries(props)) {
+            if (extensions && extensions[key]) {
+              returnVal = extensions[key](this, value)
+            }
+          }
+          return returnVal
+        }
+      })
+      return obj
     }
-  }
-}
-
-export const extenders = {
-  name: 'extenders',
-  init(obj) {
-    return obj
-  }
-} as ExtendersModule
+  }) as Extensions<E>
 
 // declare module '../knue' {
 //   interface Subscribable<T> {
