@@ -7,6 +7,8 @@ import type {
 
 type Subscribables = 'observable' | 'observableArray' | 'computed' | 'pureComputed'
 
+export interface Observable<T> extends O.Observable<T> {}
+
 // type ExtendProps<Opts> =
 //   Opts extends { extenders: Extenders }
 //     ? {
@@ -100,14 +102,12 @@ type ConstructImplementation<
   Augmentations extends GetAugmentations<ReturnTypes> = GetAugmentations<ReturnTypes>
 > = {
   observable: {
-    <T>(): O.Observable<T | undefined> & Augmentations[number]['observable']
-    <T>(value: T): O.Observable<T> & Augmentations[number]['observable']
+    <T>(): Observable<T | undefined>
+    <T>(value: T): Observable<T>
   }
-  observableArray: <T>(value?: T[]) => O.ObservableArray<T> & Augmentations[number]['observable']
-  computed: <T>(getter: ComputedGetter<T> | O.WriteableOptions<T>, debugOptions?: DebuggerOptions)
-  => (O.Computed<T> | O.WritableComputed<T>) & Augmentations[number]['computed']
-  pureComputed: <T>(getter: ComputedGetter<T> | O.WriteableOptions<T>, debugOptions?: DebuggerOptions)
-  => (O.Computed<T> | O.WritableComputed<T>) & Augmentations[number]['computed']
+  observableArray: typeof O.observableArray & Augmentations[number]['observable']
+  computed: typeof O.computed & Augmentations[number]['computed']
+  pureComputed: typeof O.pureComputed & Augmentations[number]['computed']
 } // & Omit<ReturnTypes, Subscribables>
 
 export type GetReturn<

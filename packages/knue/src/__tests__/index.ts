@@ -5,10 +5,12 @@ import { extenders, type Extender } from '../modules/extenders'
 import { type Subscribable } from 'vue-observables'
 
 const extender = {
-  numericText: <S extends Subscribable<any>>(target: S, data: string) => {
+  numericText: <S extends Subscribable<any>>(target: S, data: string): S => {
     return target
   }
 }
+
+type Foo = typeof extender['numericText'] extends Extender<infer T, infer O, infer R> ? Extender<T, O, R> : never
 
 const ko = new Knue([
   extenders(extender)
