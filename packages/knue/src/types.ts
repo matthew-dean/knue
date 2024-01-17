@@ -4,6 +4,7 @@ import { type ComputedGetter, type DebuggerOptions } from 'vue'
 import type {
   RequireAtLeastOne
 } from 'type-fest'
+import type { KnueType } from './knue'
 
 type Subscribables = 'observable' | 'observableArray' | 'computed' | 'pureComputed'
 
@@ -125,8 +126,20 @@ export type KnuePlugin<
   R extends typeof O = typeof O
 > = (opts?: PluginOptions) => {
   name: string
+  /** Initialization function can mutate and return the ko namespace */
   init(obj: R): R
 }
+
+export type KnuePluginRecord<Plugins extends KnuePlugins> = {
+  [K in keyof Plugins as `${Plugins[number]['name']}`]: Plugins[K]
+}
+
+type foo = KnuePluginRecord<[
+  {
+    name: 'extenders'
+    init: (obj: typeof O) => typeof O
+  }
+]>
 
 export type AugmentObject = {
   $subscribable: any
@@ -139,3 +152,8 @@ export type Augmentation<
   O extends typeof O = typeof O,
   T extends AugmentObject = AugmentObject
 > = O & T
+
+export interface KnueConstructor {
+  <Plugins extends KnuePlugins>(opts?: Plugins): KnueType<Plugins>
+  new<Plugins extends KnuePlugins>(opts?: Plugins): KnueType<Plugins>
+}
