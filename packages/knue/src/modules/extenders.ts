@@ -5,15 +5,15 @@
 //   type KnueOptions
 // } from '../knue'
 
-import {
-  type KnuePlugin,
-  type Extenders
-} from '../knue'
-import {
-  type Observable,
-  type Subscribable,
-  EXTENDERS_KEY
-} from 'vue-observables'
+import type {
+  KnuePlugin,
+  Augmentation
+} from '../types'
+import * as O from 'vue-observables'
+import type {
+  Entries,
+  LastArrayElement
+} from 'type-fest'
 
 // type ExtendSubscribable<T extends SubscribableFn, Opts> =
 //   Opts extends KnueOptions
@@ -29,9 +29,7 @@ import {
 //         : T
 //     : T
 
-export type ExtendersModule = KnuePlugin
-
-export type Extensions<T extends Extenders> = ReturnType<KnuePlugin> & T
+// export type Extensions<T extends Extenders> = ReturnType<KnuePlugin> & T
 /**
  * @param extensions
  *  e.g. {
@@ -39,26 +37,52 @@ export type Extensions<T extends Extenders> = ReturnType<KnuePlugin> & T
  *     }
  *  }
  */
-export const extenders: ExtendersModule = <E extends Extenders>(
+type ExtendReturn<
+  E extends Extenders,
+  P extends Record<string, any>
+> = LastArrayElement<Entries<P>>[0] extends keyof E
+  ? ReturnType<E[LastArrayElement<Entries<P>>[0]]>
+  : never
+
+export type Extender<
+  T extends O.Subscribable<any>,
+  O,
+  R extends O.Subscribable<any>
+>
+  = (target: T, options: O) => R
+
+export type Extenders<
+  T extends Record<string, Extender<any, any, any>> = Record<string, Extender<any, any, any>>
+> = T
+
+export const extenders = (<E extends Extenders>(
   extensions?: E
 ) => ({
-    name: 'extenders',
-    init(obj) {
-      obj.observable[EXTENDERS_KEY].push({
-        extend(this: Subscribable<any>, props: Record<string, any>) {
-          // eslint-disable-next-line @typescript-eslint/no-this-alias
-          let returnVal: any = this
-          for (const [key, value] of Object.entries(props)) {
-            if (extensions && extensions[key]) {
-              returnVal = extensions[key](this, value)
-            }
-          }
-          return returnVal
-        }
-      })
-      return obj
+  name: 'extenders',
+  init(obj: typeof O) {
+    type ExtendProps = {
+      [K in keyof E]: Parameters<E[K]>[1]
     }
-  }) as Extensions<E>
+
+    obj.observable[O.EXTENDERS_KEY].push({
+      extend(this: O.Subscribable<any>, props: ExtendProps) {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        let returnVal: any = this
+        for (const [key, value] of Object.entries(props)) {
+          if (extensions && extensions[key]) {
+            returnVal = extensions[key](this, value)
+          }
+        }
+        return returnVal
+      }
+    })
+    return obj as Augmentation<typeof O, {
+      $subscribable: {
+        extend<P extends ExtendProps>(props: P): ExtendReturn<E, P>
+      }
+    }>
+  }
+}) as const) satisfies KnuePlugin
 
 // declare module '../knue' {
 //   interface Subscribable<T> {

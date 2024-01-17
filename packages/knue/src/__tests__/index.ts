@@ -5,7 +5,7 @@ import { extenders, type Extender } from '../modules/extenders'
 import { type Subscribable } from 'vue-observables'
 
 const extender = {
-  numericText: (target: Subscribable<any>, data: string) => {
+  numericText: <S extends Subscribable<any>>(target: S, data: string) => {
     return target
   }
 }
@@ -20,7 +20,7 @@ const ko = new Knue([
  */
 describe('sanity check', () => {
   test('observable', () => {
-    const obs = ko.observable(1)
+    const obs = ko.observable(1).extend({ numericText: 'test' })
     console.log(obs.foo)
     expect(obs()).toBe(1)
   })
