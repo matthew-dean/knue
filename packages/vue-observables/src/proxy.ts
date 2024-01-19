@@ -90,7 +90,8 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
         if (p in extenders) {
           const value = extenders[p]
           if (typeof value === 'function') {
-            return value.bind(proxiedValue)
+            /** Proxied value is assigned to this and first argument */
+            return value.bind(proxiedValue, proxiedValue)
           }
           return value
         }

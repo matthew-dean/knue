@@ -16,6 +16,16 @@ import type {
   LastArrayElement
 } from 'type-fest'
 
+/**
+ * @example
+ * const ko = new Knue({
+ *  extenders({
+ *    numericText: (target: Subscribable, options: string) => {}
+ *  })
+ * })
+ * ko.observable(1).numericText('')
+ */
+
 export type Extender<
   T extends O.Subscribable<any> = O.Subscribable<any>,
   O = any,
@@ -35,70 +45,73 @@ type ExtendReturn<
   }
 > = LastArrayElement<Entries<P>>[1] extends Extender<S, any, infer R> ? R : never
 
-export const extenders = (<const E extends Extenders>(
+// type Entries<T extends Record<string, any>> = T extends { infer A, ...infer A }
+
+export const extenders = <const E extends Extenders>(
   extensions: E
 ) => ({
-  name: 'extenders',
-  init(obj: typeof O) {
-    type ExtendProps = {
-      [K in keyof E]: Parameters<E[K]>[1]
-    }
+    name: 'extenders',
+    init(obj: typeof O) {
+    // type ExtendProps = {
+    //   [K in keyof E]: Parameters<E[K]>[1]
+    // }
 
-    const extend = <
-      S extends O.Subscribable<any>,
-      P extends ExtendProps
-    >(
-        props: P
-      ) => {
-      const propEntries = Object.entries(props) as Entries<P>
-      let last: Pick<P, LastArrayElement<Entries<P>>[0]>
-      // eslint-disable-next-line @typescript-eslint/no-this-alias
-      let returnVal = extensions[last[0]](this, last[1])
-      for (const [key, value] of Object.entries(props)) {
-        if (extensions && extensions[key]) {
-          const extender = extensions[key]
-          returnVal = extender(this, value)
-        }
-      }
-      return returnVal
-    }
+      // const extend = <
+      //   S extends O.Subscribable<any>,
+      //   const P extends ExtendProps
+      // >(
+      //     props: P
+      //   ) => {
+      //   const propEntries = Object.entries(props) as Entries<P>
+      //   // eslint-disable-next-line @typescript-eslint/no-this-alias
+      //   // let returnVal = extensions[last[0]](this, last[1])
+      //   for (const [key, value] of propEntries) {
+      //     if (extensions && extensions[key]) {
+      //       const extender = extensions[key]
+      //       returnVal = extender(this, value)
+      //     }
+      //   }
+      //   return returnVal
+      // }
 
-    obj.observable[O.EXTENDERS_KEY].push({
-      extend
-    })
-    return obj as Augmentation<typeof O, {
-
-      observable: {
+      obj.observable[O.EXTENDERS_KEY].push(extensions)
+      return obj as Augmentation<typeof O, {
+        $observable: <T>() => any
+        observable: {
         <T>(): O.Observable<T | undefined> & {
-          extend: typeof extend<O.Observable<T | undefined>>
-        }
+            [K in keyof E]: E[K] extends (target: any, data: infer D) => infer R
+              ? E[K]<O.Observable<T>>
+              : never
+          }
         <T>(value: T): O.Observable<T> & {
-          extend: typeof extend<O.Observable<T>>
+          [K in keyof E]: E[K] extends (target: any, data: infer D) => infer R
+            ? (data: D) => R
+            : never
         }
-      }
+        }
 
       // $subscribable: {
       //   extend<P extends ExtendProps>(props: P): ExtendReturn<E, P>
       // }
-    }>
-  }
-}) as const) satisfies KnuePlugin
+      }>
+    }
+  })
 
-declare module '../types' {
-  interface KnueExtenderType {
-    observable: string
-  }
+// declare module '../types' {
+//   interface KnueExtenderType {
+//     observable: string
+//   }
 
-  type GetType<Plugins extends KnuePlugins> =
-    Plugins[number]['name'] extends 'extenders'
-      ? Omit<KnueType<Plugins>, keyof KnueExtenderType> & KnueExtenderType
-      : KnueType<Plugins>
+//   type GetType<Plugins extends KnuePlugins> =
+//     Plugins[number]['name'] extends 'extenders'
+//       ? Omit<KnueType<Plugins>, keyof KnueExtenderType> & KnueExtenderType
+//       : KnueType<Plugins>
 
-  interface KnueConstructor {
-    <const Plugins extends KnuePlugins>(opts?: Plugins): GetType<Plugins>
-    new<const Plugins extends KnuePlugins>(opts?: Plugins): GetType<Plugins>
-  }
-}
+//   interface KnueConstructor {
+//     <const Plugins extends KnuePlugins>(opts?: Plugins): GetType<Plugins>
+//     new<const Plugins extends KnuePlugins>(opts?: Plugins): GetType<Plugins>
+//   }
+// }
 
 // (function() {
 //   const existingConstructor = Knue.prototype.constructor

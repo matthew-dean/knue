@@ -29,9 +29,11 @@ export interface Computed<T> extends Subscribable<T>, ComputedRef<T> {}
 export interface WritableComputed<T> extends Subscribable<T>, Writable<T>, WritableComputedRef<T> {}
 
 export type SubscribableFn<T extends ((...args: any[]) => any) = ((...args: any[]) => any)> =
-  T & {
-    [EXTENDERS_KEY]: Array<Record<string, any>>
-  }
+  T extends ((...args: any[]) => infer S)
+    ? T & {
+      [EXTENDERS_KEY]: Array<Record<string, (target: S, data?: any) => any>>
+    }
+    : never
 
 const wrapSubscribable = <T extends (...args: any[]) => any>(
   sub: T
