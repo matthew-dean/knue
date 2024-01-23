@@ -65,7 +65,7 @@ function observableArray<T>(value: T[] = []): ObservableArray<T> {
 }
 
 const observableArrayWrapper = wrapSubscribable(observableArray)
-export { observableWrapper as observableArray }
+export { observableArrayWrapper as observableArray }
 
 export interface WritableKnockoutOptions<T> {
   read: ComputedGetter<T>
