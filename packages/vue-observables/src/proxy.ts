@@ -14,6 +14,8 @@ export const SUBSCRIBERS = Symbol('subscribers')
 
 export type RefLike<T> = ComputedRef<T> | WritableComputedRef<T>
 
+const { isArray } = Array
+
 /**
  * Mimics Knockout's API for getting / setting
  */
@@ -86,6 +88,11 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
         return () => (vueObj as any).dep?.size ?? 0
       }
 
+      /** In Knockout, array functions are available on the observable */
+      if (p in Array.prototype && isArray((vueObj as any)._value)) {
+        return Array.prototype[p as keyof any[]].bind((vueObj as any)._value)
+      }
+
       for (const extenders of constructorFn[EXTENDERS_KEY]) {
         if (p in extenders) {
           const value = extenders[p]
@@ -122,6 +129,9 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
       return true
     },
     has(target, p) {
+      if (p in Array.prototype && isArray((vueObj as any)._value)) {
+        return true
+      }
       return p in vueObj || p in target
     }
   }

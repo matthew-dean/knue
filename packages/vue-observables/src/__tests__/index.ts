@@ -5,7 +5,8 @@ import {
   computed,
   isObservable,
   isComputed,
-  isWritableObservable
+  isWritableObservable,
+  isObservableArray
 } from '..'
 import { watch, nextTick } from 'vue'
 
@@ -19,6 +20,7 @@ describe('basic API', () => {
     expect(isObservable(obs)).toBe(true)
     expect(isComputed(obs)).toBe(false)
     expect(isWritableObservable(obs)).toBe(true)
+    expect(isObservableArray(obs)).toBe(false)
   })
 
   test('observableArray', () => {
@@ -26,9 +28,12 @@ describe('basic API', () => {
     expect(obs()).toEqual([1])
     obs().push(2)
     expect(obs()).toEqual([1, 2])
+    obs.push(3)
+    expect(obs()).toEqual([1, 2, 3])
     expect(isObservable(obs)).toBe(true)
     expect(isComputed(obs)).toBe(false)
     expect(isWritableObservable(obs)).toBe(true)
+    expect(isObservableArray(obs)).toBe(true)
   })
 
   test('computed', () => {
