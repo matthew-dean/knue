@@ -5,8 +5,8 @@ import {
   type WritableComputedRef,
   watch
 } from 'vue'
-import { type Subscribable } from '.'
-import { ReactiveFlags } from './constants'
+import { type Subscribable, type SubscribableFn } from '.'
+import { ReactiveFlags, EXTENDERS_KEY } from './constants'
 
 export const COMPUTED = Symbol('computed')
 export const OBSERVABLE = Symbol('observable')
@@ -20,6 +20,7 @@ export type RefLike<T> = ComputedRef<T> | WritableComputedRef<T>
 export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   vueObj: V,
+  constructorFn: SubscribableFn,
   computed: boolean = false
 ) => {
   function setValue(value: any) {
@@ -68,7 +69,7 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
   })
 
   const proxyHandler: ProxyHandler<any> = {
-    get(target, p) {
+    get(target, p: string) {
       if (p === 'bind') {
         /**
          * Make sure that re-bound functions are also wrapped in this proxy
@@ -83,6 +84,16 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
       }
       if (p === 'getDependenciesCount') {
         return () => (vueObj as any).dep?.size ?? 0
+      }
+
+      for (const extenders of constructorFn[EXTENDERS_KEY]) {
+        if (p in extenders) {
+          const value = extenders[p]
+          if (typeof value === 'function') {
+            return value.bind(proxiedValue)
+          }
+          return value
+        }
       }
       /**
        * Return all Vue ref properties, so that they
@@ -115,5 +126,7 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
     }
   }
 
-  return new Proxy(getterSetter, proxyHandler) as Subscribable<T>
+  const proxiedValue = new Proxy(getterSetter, proxyHandler) as Subscribable<T>
+
+  return proxiedValue
 }

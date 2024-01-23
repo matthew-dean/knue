@@ -11,7 +11,9 @@ import {
 } from 'vue'
 import type { RefLike } from './proxy'
 import { getProxy, COMPUTED, OBSERVABLE } from './proxy'
-import { ReactiveFlags } from './constants'
+import { ReactiveFlags, EXTENDERS_KEY } from './constants'
+
+export { EXTENDERS_KEY }
 
 export interface Subscribable<T> {
   (): T
@@ -26,26 +28,44 @@ export interface ObservableArray<T> extends Observable<T[]> {}
 export interface Computed<T> extends Subscribable<T>, ComputedRef<T> {}
 export interface WritableComputed<T> extends Subscribable<T>, Writable<T>, WritableComputedRef<T> {}
 
-export function observable<T>(): Observable<T | undefined>
-export function observable<T>(value: T): Observable<T>
-export function observable<T>(value?: T) {
+export type SubscribableFn<T extends ((...args: any[]) => any) = ((...args: any[]) => any)> =
+  T & {
+    [EXTENDERS_KEY]: Array<Record<string, any>>
+  }
+
+const wrapSubscribable = <T extends (...args: any[]) => any>(
+  sub: T
+) => {
+  (sub as any)[EXTENDERS_KEY] = []
+  return sub as SubscribableFn<T>
+}
+
+function observable<T>(): Observable<T | undefined>
+function observable<T>(value: T): Observable<T>
+function observable<T>(value?: T) {
   if (arguments.length === 0) {
     const vueObj = ref<T | undefined>() as RefLike<T>
-    return getProxy<T>(vueObj) as Observable<T | undefined>
+    return getProxy<T>(vueObj, observableWrapper) as Observable<T | undefined>
   }
   const vueObj = ref<T>(value as T) as RefLike<T>
-  return getProxy<T>(vueObj) as Observable<T>
+  return getProxy<T>(vueObj, observableWrapper) as Observable<T>
 }
+
+const observableWrapper = wrapSubscribable(observable)
+export { observableWrapper as observable }
 
 /**
  * This is similar to observable, except, like Knockout, an empty
  * value defaults to an empty array.
  */
-export function observableArray<T>(value: T[] = []): ObservableArray<T> {
+function observableArray<T>(value: T[] = []): ObservableArray<T> {
   const vueObj = ref<T[]>(value) as RefLike<T[]>
 
-  return getProxy(vueObj) as ObservableArray<T>
+  return getProxy(vueObj, observableArrayWrapper) as ObservableArray<T>
 }
+
+const observableArrayWrapper = wrapSubscribable(observableArray)
+export { observableWrapper as observableArray }
 
 export interface WritableKnockoutOptions<T> {
   read: ComputedGetter<T>
@@ -63,13 +83,13 @@ export interface WritableKnockoutOptions<T> {
 
 export type WriteableOptions<T> = WritableKnockoutOptions<T> | WritableComputedOptions<T>
 
-export function computed<T>(getter: ComputedGetter<T>, debugOptions?: DebuggerOptions): Computed<T>
-export function computed<T>(options: WriteableOptions<T>, debugOptions?: DebuggerOptions): WritableComputed<T>
-export function computed<T>(options: ComputedGetter<T> | WriteableOptions<T>, debugOptions?: DebuggerOptions): Computed<T> | WritableComputed<T> {
+function computed<T>(getter: ComputedGetter<T>, debugOptions?: DebuggerOptions): Computed<T>
+function computed<T>(options: WriteableOptions<T>, debugOptions?: DebuggerOptions): WritableComputed<T>
+function computed<T>(options: ComputedGetter<T> | WriteableOptions<T>, debugOptions?: DebuggerOptions): Computed<T> | WritableComputed<T> {
   // let com: ComputedRef<T> | WritableComputedRef<T>
   if (typeof options === 'function') {
     const com = vueComputed(options, debugOptions) as RefLike<T>
-    return getProxy<T>(com, true) as Computed<T>
+    return getProxy<T>(com, computedWrapper, true) as Computed<T>
   }
   let get = 'read' in options ? options.read : options.get
   if ('owner' in options) {
@@ -84,9 +104,12 @@ export function computed<T>(options: ComputedGetter<T> | WriteableOptions<T>, de
     ? getProxy<T>(vueComputed({
       get,
       set
-    }, debugOptions), true) as WritableComputed<T>
-    : getProxy<T>(vueComputed(get, debugOptions), true) as Computed<T>
+    }, debugOptions), computedWrapper, true) as WritableComputed<T>
+    : getProxy<T>(vueComputed(get, debugOptions), computedWrapper, true) as Computed<T>
 }
+
+const computedWrapper = wrapSubscribable(computed)
+export { computedWrapper as computed }
 
 export function isObservable(obj: any): obj is Observable<any> {
   return obj && OBSERVABLE in obj
