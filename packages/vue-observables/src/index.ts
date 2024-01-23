@@ -23,7 +23,17 @@ export interface Subscribable<T> {
   peek(): T
   getDependenciesCount(): number
 }
-export type Writable<T> = ((value: T) => void) & (T extends any[] ? any[] : unknown)
+
+export interface ExtendedArray<T> extends Array<T> {
+  /** @todo - allow params */
+  removeAll(): void
+  // remove(item: T): T[]
+  // remove(removeFunction: (item: T) => boolean): T[]
+}
+
+export type Writable<T> = ((value: T) => void) & (
+  T extends Array<infer I>
+    ? ExtendedArray<I> : unknown)
 
 export type Observable<T> = Subscribable<T> & Writable<T> & Ref<T>
 export type ObservableArray<T> = Observable<T[]>

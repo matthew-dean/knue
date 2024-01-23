@@ -34,7 +34,20 @@ describe('basic API', () => {
     expect(isComputed(obs)).toBe(false)
     expect(isWritableObservable(obs)).toBe(true)
     expect(isObservableArray(obs)).toBe(true)
+
+    // Knockout-specific
+    obs.removeAll()
+    expect(obs()).toEqual([])
+    // obs.push(1, 2, 3)
+    // expect(obs()).toEqual([1, 2, 3])
+    // const removed = obs.remove(2)
+    // expect(obs()).toEqual([1, 3])
+    // expect(removed).toEqual([2])
   })
+
+  // test('knockout-specific array functions', () => {
+  //   const obs = observableArray([1, 2])
+  // })
 
   test('computed', () => {
     const obs = computed(() => 1)

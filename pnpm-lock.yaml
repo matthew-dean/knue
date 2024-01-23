@@ -104,6 +104,9 @@ importers:
       '@vueuse/core':
         specifier: ~10.7.1
         version: 10.7.1(vue@3.4.11)
+      lodash-es:
+        specifier: ~4.17.21
+        version: 4.17.21
     devDependencies:
       vue:
         specifier: ~3.4.11

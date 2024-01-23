@@ -7,6 +7,7 @@ import {
 } from 'vue'
 import { type Subscribable, type SubscribableFn } from '.'
 import { ReactiveFlags, EXTENDERS_KEY } from './constants'
+// import remove from 'lodash-es/remove'
 
 export const COMPUTED = Symbol('computed')
 export const OBSERVABLE = Symbol('observable')
@@ -80,17 +81,36 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
           return new Proxy(getterSetter.bind(thisVal), proxyHandler)
         }
       }
+      const currentVal = (vueObj as any)._value
       if (p === 'peek') {
         /** Peek at the private Vue value */
-        return () => (vueObj as any)._value
+        return () => currentVal
       }
       if (p === 'getDependenciesCount') {
         return () => (vueObj as any).dep?.size ?? 0
       }
 
       /** In Knockout, array functions are available on the observable */
-      if (p in Array.prototype && isArray((vueObj as any)._value)) {
-        return Array.prototype[p as keyof any[]].bind((vueObj as any)._value)
+      if (isArray(currentVal)) {
+        if (p in Array.prototype) {
+          return Array.prototype[p as keyof any[]].bind(currentVal)
+        }
+        switch (p) {
+          case 'removeAll':
+            return () => {
+              currentVal.length = 0
+            }
+          case 'reversed':
+            return () => currentVal.slice().reverse()
+          /** @todo - get working later */
+          // case 'remove':
+          //   return (itemOrFunc: any) => {
+          //     if (typeof itemOrFunc === 'function') {
+          //       return remove(currentVal, itemOrFunc as Parameters<typeof remove>[1])
+          //     }
+          //     return () => remove(currentVal, item => item === itemOrFunc)
+          //   }
+        }
       }
 
       for (const extenders of constructorFn[EXTENDERS_KEY]) {
