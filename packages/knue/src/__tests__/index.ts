@@ -1,18 +1,7 @@
 import { describe, test, expect, vi } from 'vitest'
-import Knue from '..'
-// import '../modules/extenders'
-import { extenders, type Extender } from '../modules/extenders'
-import { type Subscribable } from 'vue-observables'
+import Knue from '../index'
 
-const extender = {
-  numericText: <S extends Subscribable<any>>(target: S, data: string) => {
-    return target
-  }
-}
-
-const ko = new Knue([
-  extenders(extender)
-])
+const ko = new Knue()
 
 /**
  * @note - We shouldn't have to test observable behavior,
