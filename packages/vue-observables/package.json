@@ -1,6 +1,6 @@
 {
   "name": "vue-observables",
-  "version": "1.0.0-alpha.6",
+  "version": "1.0.0-alpha.7",
   "description": "Knockout-like functional syntax for Vue.js",
   "license": "MIT",
   "main": "./dist/index.js",
