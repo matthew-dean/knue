@@ -52,14 +52,10 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
     if (callbackTarget) {
       callback = callback.bind(callbackTarget)
     }
-    const handle = watch(vueObj, callback)
-    ;(getterSetter as any)[SUBSCRIBERS].add(handle)
+    watch(vueObj, callback)
   }
 
   Object.defineProperties(getterSetter, {
-    [SUBSCRIBERS]: {
-      value: new Set()
-    },
     [OBSERVABLE]: {
       value: true
     },
@@ -73,21 +69,28 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
 
   const proxyHandler: ProxyHandler<any> = {
     get(target, p: string) {
-      if (p === 'bind') {
-        /**
-         * Make sure that re-bound functions are also wrapped in this proxy
-         */
-        return function(thisVal: any) {
-          return new Proxy(getterSetter.bind(thisVal), proxyHandler)
-        }
-      }
       const currentVal = (vueObj as any)._value
-      if (p === 'peek') {
-        /** Peek at the private Vue value */
-        return () => currentVal
-      }
-      if (p === 'getDependenciesCount') {
-        return () => (vueObj as any).dep?.size ?? 0
+      /** Knockout API */
+      switch (p) {
+        case 'bind':
+          /**
+           * Make sure that re-bound functions are also wrapped in this proxy
+           */
+          return function(thisVal: any) {
+            return new Proxy(getterSetter.bind(thisVal), proxyHandler)
+          }
+        case 'peek':
+          /** Peek at the private Vue value */
+          return () => currentVal
+        case 'getDependenciesCount':
+          return () => (vueObj as any).dep?.size ?? 0
+        case 'dispose':
+          return () => {
+            const deps = (vueObj as any).dep
+            if (deps) {
+              deps.cleanup()
+            }
+          }
       }
 
       /** In Knockout, array functions are available on the observable */

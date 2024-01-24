@@ -111,6 +111,10 @@ describe('test subscriptions', () => {
     obs(2)
     await nextTick()
     expect(spy).toHaveBeenCalledTimes(2)
+    obs.dispose()
+    expect(obs.getDependenciesCount()).toBe(0)
+    obs(3)
+    expect(spy).toHaveBeenCalledTimes(2)
   })
 
   test('computed', async () => {
