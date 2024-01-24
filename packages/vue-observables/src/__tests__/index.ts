@@ -38,11 +38,14 @@ describe('basic API', () => {
     // Knockout-specific
     obs.removeAll()
     expect(obs()).toEqual([])
-    // obs.push(1, 2, 3)
-    // expect(obs()).toEqual([1, 2, 3])
-    // const removed = obs.remove(2)
-    // expect(obs()).toEqual([1, 3])
-    // expect(removed).toEqual([2])
+    obs.push(1, 2, 3)
+    expect(obs()).toEqual([1, 2, 3])
+    let removed = obs.remove(2)
+    expect(obs()).toEqual([1, 3])
+    expect(removed).toEqual([2])
+    removed = obs.remove((item) => item === 3)
+    expect(obs()).toEqual([1])
+    expect(removed).toEqual([3])
   })
 
   // test('knockout-specific array functions', () => {

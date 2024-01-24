@@ -28,8 +28,8 @@ export interface Subscribable<T> {
 export interface ExtendedArray<T> extends Array<T> {
   /** @todo - allow params */
   removeAll(): void
-  // remove(item: T): T[]
-  // remove(removeFunction: (item: T) => boolean): T[]
+  remove(item: T): T[]
+  remove(removeFunction: (item: T) => boolean): T[]
 }
 
 export type Writable<T> = ((value: T) => void) & (

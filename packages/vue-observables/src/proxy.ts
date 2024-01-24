@@ -7,7 +7,7 @@ import {
 } from 'vue'
 import { type Subscribable, type SubscribableFn } from '.'
 import { ReactiveFlags, EXTENDERS_KEY } from './constants'
-// import remove from 'lodash-es/remove'
+import remove from 'lodash-es/remove'
 
 export const COMPUTED = Symbol('computed')
 export const OBSERVABLE = Symbol('observable')
@@ -106,13 +106,13 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
           case 'reversed':
             return () => currentVal.slice().reverse()
           /** @todo - get working later */
-          // case 'remove':
-          //   return (itemOrFunc: any) => {
-          //     if (typeof itemOrFunc === 'function') {
-          //       return remove(currentVal, itemOrFunc as Parameters<typeof remove>[1])
-          //     }
-          //     return () => remove(currentVal, item => item === itemOrFunc)
-          //   }
+          case 'remove':
+            return (itemOrFunc: any) => {
+              if (typeof itemOrFunc === 'function') {
+                return remove(currentVal, itemOrFunc as Parameters<typeof remove>[1])
+              }
+              return remove(currentVal, item => item === itemOrFunc)
+            }
         }
       }
 
