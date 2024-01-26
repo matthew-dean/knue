@@ -1,6 +1,6 @@
 {
   "name": "vue-observables",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-alpha.7",
   "description": "Knockout-like functional syntax for Vue.js",
   "license": "MIT",
   "main": "./dist/index.js",
@@ -24,7 +24,8 @@
     "vue": ">=3.2"
   },
   "dependencies": {
-    "@vueuse/core": "~10.7.1"
+    "@vueuse/core": "~10.7.1",
+    "lodash-es": "~4.17.21"
   },
   "repository": {
     "type": "git",

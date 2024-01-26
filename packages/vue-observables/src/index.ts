@@ -15,18 +15,31 @@ import { ReactiveFlags, EXTENDERS_KEY } from './constants'
 
 export { EXTENDERS_KEY }
 
+const { isArray } = Array
+
 export interface Subscribable<T> {
   (): T
+  dispose(): void
   subscribe(callback: (newValue: T) => void): () => void
   peek(): T
   getDependenciesCount(): number
 }
-export type Writable<T> = (value: T) => void
 
-export interface Observable<T> extends Subscribable<T>, Writable<T>, Ref<T> {}
-export interface ObservableArray<T> extends Observable<T[]> {}
-export interface Computed<T> extends Subscribable<T>, ComputedRef<T> {}
-export interface WritableComputed<T> extends Subscribable<T>, Writable<T>, WritableComputedRef<T> {}
+export interface ExtendedArray<T> extends Array<T> {
+  /** @todo - allow params */
+  removeAll(): void
+  remove(item: T): T[]
+  remove(removeFunction: (item: T) => boolean): T[]
+}
+
+export type Writable<T> = ((value: T) => void) & (
+  T extends Array<infer I>
+    ? ExtendedArray<I> : unknown)
+
+export type Observable<T> = Subscribable<T> & Writable<T> & Ref<T>
+export type ObservableArray<T> = Observable<T[]>
+export type Computed<T> = Subscribable<T> & ComputedRef<T>
+export type WritableComputed<T> = Subscribable<T> & Writable<T> & WritableComputedRef<T>
 
 export type SubscribableFn<T extends ((...args: any[]) => any) = ((...args: any[]) => any)> =
   T & {
@@ -65,7 +78,7 @@ function observableArray<T>(value: T[] = []): ObservableArray<T> {
 }
 
 const observableArrayWrapper = wrapSubscribable(observableArray)
-export { observableWrapper as observableArray }
+export { observableArrayWrapper as observableArray }
 
 export interface WritableKnockoutOptions<T> {
   read: ComputedGetter<T>
@@ -113,6 +126,10 @@ export { computedWrapper as computed }
 
 export function isObservable(obj: any): obj is Observable<any> {
   return obj && OBSERVABLE in obj
+}
+
+export function isObservableArray(obj: any): obj is ObservableArray<any> {
+  return isObservable(obj) && isArray(obj.peek())
 }
 
 export function isWritableObservable(obj: any): obj is Observable<any> | WritableComputed<any> {

@@ -7,12 +7,15 @@ import {
 } from 'vue'
 import { type Subscribable, type SubscribableFn } from '.'
 import { ReactiveFlags, EXTENDERS_KEY } from './constants'
+import remove from 'lodash-es/remove'
 
 export const COMPUTED = Symbol('computed')
 export const OBSERVABLE = Symbol('observable')
 export const SUBSCRIBERS = Symbol('subscribers')
 
 export type RefLike<T> = ComputedRef<T> | WritableComputedRef<T>
+
+const { isArray } = Array
 
 /**
  * Mimics Knockout's API for getting / setting
@@ -49,14 +52,10 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
     if (callbackTarget) {
       callback = callback.bind(callbackTarget)
     }
-    const handle = watch(vueObj, callback)
-    ;(getterSetter as any)[SUBSCRIBERS].add(handle)
+    watch(vueObj, callback)
   }
 
   Object.defineProperties(getterSetter, {
-    [SUBSCRIBERS]: {
-      value: new Set()
-    },
     [OBSERVABLE]: {
       value: true
     },
@@ -70,20 +69,61 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
 
   const proxyHandler: ProxyHandler<any> = {
     get(target, p: string) {
-      if (p === 'bind') {
-        /**
-         * Make sure that re-bound functions are also wrapped in this proxy
-         */
-        return function(thisVal: any) {
-          return new Proxy(getterSetter.bind(thisVal), proxyHandler)
+      const currentVal = (vueObj as any)._value
+      /** Knockout API */
+      switch (p) {
+        case 'bind':
+          /**
+           * Make sure that re-bound functions are also wrapped in this proxy
+           */
+          return function(thisVal: any) {
+            return new Proxy(getterSetter.bind(thisVal), proxyHandler)
+          }
+        case 'peek':
+          /** Peek at the private Vue value */
+          return () => currentVal
+        case 'getDependenciesCount':
+          return () => (vueObj as any).dep?.size ?? 0
+        case 'dispose':
+          return () => {
+            const deps = (vueObj as any).dep
+            if (deps) {
+              deps.cleanup()
+            }
+          }
+      }
+
+      /** In Knockout, array functions are available on the observable */
+      if (isArray(currentVal)) {
+        if (p in Array.prototype) {
+          return Array.prototype[p as keyof any[]].bind(currentVal)
+        }
+        switch (p) {
+          case 'removeAll':
+            return () => {
+              currentVal.length = 0
+            }
+          case 'reversed':
+            return () => currentVal.slice().reverse()
+          /** @todo - get working later */
+          case 'remove':
+            return (itemOrFunc: any) => {
+              if (typeof itemOrFunc === 'function') {
+                return remove(currentVal, itemOrFunc as Parameters<typeof remove>[1])
+              }
+              return remove(currentVal, item => item === itemOrFunc)
+            }
         }
       }
-      if (p === 'peek') {
-        /** Peek at the private Vue value */
-        return () => (vueObj as any)._value
-      }
-      if (p === 'getDependenciesCount') {
-        return () => (vueObj as any).dep?.size ?? 0
+
+      for (const extenders of constructorFn[EXTENDERS_KEY]) {
+        if (p in extenders) {
+          const value = extenders[p]
+          if (typeof value === 'function') {
+            return value.bind(proxiedValue)
+          }
+          return value
+        }
       }
 
       for (const extenders of constructorFn[EXTENDERS_KEY]) {
@@ -122,6 +162,9 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
       return true
     },
     has(target, p) {
+      if (p in Array.prototype && isArray((vueObj as any)._value)) {
+        return true
+      }
       return p in vueObj || p in target
     }
   }
