@@ -31,9 +31,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/matthew-dean/vue-knockout.git"
+    "url": "https://github.com/matthew-dean/knue.git"
   },
   "bugs": {
-    "url": "https://github.com/matthew-dean/vue-knockout/issues"
+    "url": "https://github.com/matthew-dean/knue/issues"
   }
 }
