@@ -47,4 +47,18 @@ A computed observable.
 | ----------------- | ------------------------ |
 | `read` / `get`  | getter function        |
 | `write` / `set` | (opt) setter function  |
-| `owner`         | (opt) context of`this` |
+
+## Usage in templates
+
+```vue
+<script setup lang="ts">
+// ....
+import { observable } from 'vue-observables'
+
+const show = observable(false)
+</script>
+
+<template>
+  <Popup :show="show()" />
+</template>
+```

@@ -125,6 +125,16 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
           return value
         }
       }
+
+      for (const extenders of constructorFn[EXTENDERS_KEY]) {
+        if (p in extenders) {
+          const value = extenders[p]
+          if (typeof value === 'function') {
+            return value.bind(proxiedValue)
+          }
+          return value
+        }
+      }
       /**
        * Return all Vue ref properties, so that they
        * can be tested with other Vue utilities.
