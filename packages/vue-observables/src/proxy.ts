@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
   type Ref,
+  type ShallowRef,
   type ComputedRef,
   type WritableComputedRef,
+  shallowReactive,
   watch
 } from 'vue'
 import { type Subscribable, type SubscribableFn } from '.'
@@ -13,7 +15,7 @@ export const COMPUTED = Symbol('computed')
 export const OBSERVABLE = Symbol('observable')
 export const SUBSCRIBERS = Symbol('subscribers')
 
-export type RefLike<T> = ComputedRef<T> | WritableComputedRef<T>
+export type RefLike<T> = ShallowRef<T> | ComputedRef<T> | WritableComputedRef<T>
 
 const { isArray } = Array
 
@@ -28,7 +30,10 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
 ) => {
   function setValue(value: any) {
     if (!(vueObj as any)[ReactiveFlags.IS_READONLY]) {
-      (vueObj as Ref).value = value
+      value = typeof value === 'object' && value !== null
+        ? shallowReactive(value)
+        : value
+      ;(vueObj as Ref).value = value
     } else {
       throw new Error('Cannot set value on a read-only observable')
     }

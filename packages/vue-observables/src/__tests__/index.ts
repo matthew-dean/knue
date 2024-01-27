@@ -48,6 +48,13 @@ describe('basic API', () => {
     expect(removed).toEqual([3])
   })
 
+  test('test that Vue doesn\'t auto-unwrap', () => {
+    const obs = observable({
+      foo: observable(1)
+    })
+    expect(obs().foo()).toBe(1)
+  })
+
   // test('knockout-specific array functions', () => {
   //   const obs = observableArray([1, 2])
   // })

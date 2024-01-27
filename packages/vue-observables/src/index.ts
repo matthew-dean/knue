@@ -1,7 +1,8 @@
 import {
-  type Ref,
-  ref,
+  shallowRef,
+  shallowReactive,
   type ComputedRef,
+  type ShallowRef,
   computed as vueComputed,
   type ComputedGetter,
   type WritableComputedOptions,
@@ -36,7 +37,7 @@ export type Writable<T> = ((value: T) => void) & (
   T extends Array<infer I>
     ? ExtendedArray<I> : unknown)
 
-export type Observable<T> = Subscribable<T> & Writable<T> & Ref<T>
+export type Observable<T> = Subscribable<T> & Writable<T> & ShallowRef<T>
 export type ObservableArray<T> = Observable<T[]>
 export type Computed<T> = Subscribable<T> & ComputedRef<T>
 export type WritableComputed<T> = Subscribable<T> & Writable<T> & WritableComputedRef<T>
@@ -57,10 +58,11 @@ function observable<T>(): Observable<T | undefined>
 function observable<T>(value: T): Observable<T>
 function observable<T>(value?: T) {
   if (arguments.length === 0) {
-    const vueObj = ref<T | undefined>() as RefLike<T>
+    const vueObj = shallowRef<T | undefined>() as RefLike<T>
     return getProxy<T>(vueObj, observableWrapper) as Observable<T | undefined>
   }
-  const vueObj = ref<T>(value as T) as RefLike<T>
+  value = typeof value === 'object' && value !== null ? shallowReactive(value) : value
+  const vueObj = shallowRef<T>(value as T) as RefLike<T>
   return getProxy<T>(vueObj, observableWrapper) as Observable<T>
 }
 
@@ -72,7 +74,7 @@ export { observableWrapper as observable }
  * value defaults to an empty array.
  */
 function observableArray<T>(value: T[] = []): ObservableArray<T> {
-  const vueObj = ref<T[]>(value) as RefLike<T[]>
+  const vueObj = shallowRef<T[]>(shallowReactive(value)) as RefLike<T[]>
 
   return getProxy(vueObj, observableArrayWrapper) as ObservableArray<T>
 }
