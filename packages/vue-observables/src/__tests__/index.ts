@@ -23,6 +23,19 @@ describe('basic API', () => {
     expect(isObservableArray(obs)).toBe(false)
   })
 
+  test('silent update', () => {
+    const obs = observable(1)
+    const com = computed(() => obs() + 1)
+    expect(obs()).toBe(1)
+    expect(com()).toBe(2)
+    obs.silentSet(10)
+    expect(obs()).toBe(10)
+    expect(com()).toBe(2)
+    obs(20)
+    expect(obs()).toBe(20)
+    expect(com()).toBe(21)
+  })
+
   test('observableArray', () => {
     const obs = observableArray([1])
     expect(obs()).toEqual([1])

@@ -28,11 +28,15 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
   constructorFn: SubscribableFn,
   computed: boolean = false
 ) => {
-  function setValue(value: any) {
+  function setValue(value: any, silent: boolean = false) {
     if (!(vueObj as any)[ReactiveFlags.IS_READONLY]) {
       value = typeof value === 'object' && value !== null
         ? shallowReactive(value)
         : value
+      if (silent) {
+        (vueObj as any)._value = value
+        return
+      }
       ;(vueObj as Ref).value = value
     } else {
       throw new Error('Cannot set value on a read-only observable')
@@ -96,6 +100,9 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
               deps.cleanup()
             }
           }
+        /** Additional API */
+        case 'silentSet':
+          return (value: T) => { setValue(value, true) }
       }
 
       /** In Knockout, array functions are available on the observable */
