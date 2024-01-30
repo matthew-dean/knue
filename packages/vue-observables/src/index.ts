@@ -129,11 +129,11 @@ function computed<T>(options: ComputedGetter<T> | WriteableOptions<T>, debugOpti
 const computedWrapper = wrapSubscribable(computed)
 export { computedWrapper as computed }
 
-export function isObservable(obj: any): obj is Observable<any> {
-  return obj && OBSERVABLE in obj
+export function isObservable(obj: unknown): obj is Observable<any> {
+  return !!obj && typeof obj === 'object' && OBSERVABLE in obj
 }
 
-export function isObservableArray(obj: any): obj is ObservableArray<any> {
+export function isObservableArray(obj: unknown): obj is ObservableArray<any> {
   return isObservable(obj) && isArray(obj.peek())
 }
 
