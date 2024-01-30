@@ -33,7 +33,10 @@ export interface ExtendedArray<T> extends Array<T> {
   remove(removeFunction: (item: T) => boolean): T[]
 }
 
-export type Writable<T> = ((value: T) => void) & (
+export type Writable<T> = {
+  (value: T): void
+  silentSet(value: T): void
+} & (
   T extends Array<infer I>
     ? ExtendedArray<I> : unknown)
 
