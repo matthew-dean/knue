@@ -20,6 +20,20 @@ export type RefLike<T> = ShallowRef<T> | ComputedRef<T> | WritableComputedRef<T>
 const { isArray } = Array
 
 /**
+ * @see https://stackoverflow.com/questions/175739/how-can-i-check-if-a-string-is-a-valid-number
+ */
+function isNumeric(val: unknown) {
+  if (typeof val === 'number') {
+    return !isNaN(val)
+  }
+  if (typeof val !== 'string') {
+    return false
+  }
+  /** TypeScript doesn't like this but too bad */
+  return !isNaN(val as unknown as number) && !isNaN(parseFloat(val))
+}
+
+/**
  * Mimics Knockout's API for getting / setting
  */
 export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
@@ -107,6 +121,9 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
 
       /** In Knockout, array functions are available on the observable */
       if (isArray(currentVal)) {
+        if (isNumeric(p)) {
+          return currentVal[p as unknown as number]
+        }
         if (p in Array.prototype) {
           if (typeof Array.prototype[p as keyof any[]] === 'function') {
             return Array.prototype[p as keyof any[]].bind(currentVal)
@@ -175,12 +192,6 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
        */
       target[p] = value
       return true
-    },
-    has(target, p) {
-      if (p in Array.prototype && isArray((vueObj as any)._value)) {
-        return true
-      }
-      return p in vueObj || p in target
     }
   }
 

@@ -51,6 +51,9 @@ describe('basic API', () => {
     // Test array methods on root observable
     expect(obs.length).toBe(3)
     expect(obs.map(i => i)).toEqual(obs())
+    expect(obs[0]).toBe(1)
+    expect(obs[9]).toBe(undefined)
+
     // Knockout-specific
     obs.removeAll()
     expect(obs()).toEqual([])
