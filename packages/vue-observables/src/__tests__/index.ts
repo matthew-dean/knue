@@ -48,6 +48,9 @@ describe('basic API', () => {
     expect(isWritableObservable(obs)).toBe(true)
     expect(isObservableArray(obs)).toBe(true)
 
+    // Test array methods on root observable
+    expect(obs.length).toBe(3)
+    expect(obs.map(i => i)).toEqual(obs())
     // Knockout-specific
     obs.removeAll()
     expect(obs()).toEqual([])

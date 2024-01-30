@@ -130,7 +130,7 @@ const computedWrapper = wrapSubscribable(computed)
 export { computedWrapper as computed }
 
 export function isObservable(obj: unknown): obj is Observable<any> {
-  return !!obj && typeof obj === 'object' && OBSERVABLE in obj
+  return !!obj && typeof obj === 'function' && OBSERVABLE in obj
 }
 
 export function isObservableArray(obj: unknown): obj is ObservableArray<any> {

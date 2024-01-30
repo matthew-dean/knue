@@ -108,7 +108,10 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
       /** In Knockout, array functions are available on the observable */
       if (isArray(currentVal)) {
         if (p in Array.prototype) {
-          return Array.prototype[p as keyof any[]].bind(currentVal)
+          if (typeof Array.prototype[p as keyof any[]] === 'function') {
+            return Array.prototype[p as keyof any[]].bind(currentVal)
+          }
+          return currentVal[p as keyof any[]]
         }
         switch (p) {
           case 'removeAll':
