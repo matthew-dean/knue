@@ -9,7 +9,7 @@ import {
 } from 'vue'
 import { type Subscribable, type SubscribableFn } from '.'
 import { ReactiveFlags, EXTENDERS_KEY } from './constants'
-import remove from 'lodash-es/remove'
+import remove from 'lodash/remove'
 
 export const COMPUTED = Symbol('computed')
 export const OBSERVABLE = Symbol('observable')

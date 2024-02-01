@@ -98,10 +98,13 @@ importers:
       '@vueuse/core':
         specifier: ~10.7.1
         version: 10.7.1(vue@3.4.11)
-      lodash-es:
+      lodash:
         specifier: ~4.17.21
         version: 4.17.21
     devDependencies:
+      '@types/lodash':
+        specifier: ~4.14.202
+        version: 4.14.202
       vue:
         specifier: ~3.4.11
         version: 3.4.11(typescript@5.3.3)
@@ -2072,7 +2075,6 @@ packages:
 
   /lodash@4.17.21:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
-    dev: true
 
   /loupe@2.3.7:
     resolution: {integrity: sha512-zSMINGVYkdpYSOBmLi0D1Uo7JU9nVdQKrHxC8eYlV+9YKK9WePqAlL7lSlorG/U2Fw1w0hTBmaa/jrQ3UbPHtA==}
