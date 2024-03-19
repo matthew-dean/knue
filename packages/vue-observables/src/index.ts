@@ -21,7 +21,12 @@ const { isArray } = Array
 export interface Subscribable<T> {
   (): T
   dispose(): void
-  subscribe(callback: (newValue: T) => void): () => void
+  subscribe(
+    callback: (newValue: T) => void,
+    callbackTarget?: any,
+    /** Un-used */
+    event?: string
+  ): () => void
   peek(): T
   getDependenciesCount(): number
 }
