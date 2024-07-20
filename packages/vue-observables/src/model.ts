@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { ref, watch, computed, unref, isRef, type Ref, type UnwrapRef } from 'vue'
+import { ref, watch, computed, isRef, type Ref } from 'vue'
 import type { PartialDeep, Paths, Get } from 'type-fest'
 import get from 'lodash/get'
 import set from 'lodash/set'
@@ -38,7 +38,9 @@ export function model<
     isRef(initialValue) ? initialValue : ref(initialValue ?? {})) as Ref<PartialDeep<T>>
   const outObj = ref<GetValueType<T>>()
   const errors = ref<Record<string, string | undefined>>({})
-  const error = computed(() => Object.values(errors.value)[0])
+  const error = computed(() => {
+    return Object.values(errors.value)[0]
+  })
   const valid = ref(true)
 
   const modelGetter = function(path?: Exclude<Paths<GetValueType<T>>, number>) {
@@ -50,7 +52,7 @@ export function model<
         return get(inObj.value, path!)
       },
       set value(value: any) {
-        set((inObj.value as PartialDeep<T>), path!, value)
+        set(inObj.value, path!, value)
       },
       get error() {
         return errors.value[path!]
@@ -100,7 +102,7 @@ export function model<
   if (validator) {
     watch(inObj, async () => {
       try {
-        const [err, result] = await validator(inObj.value as PartialDeep<T>)
+        const [err, result] = await validator(inObj.value)
         if (err) {
           throw err
         }

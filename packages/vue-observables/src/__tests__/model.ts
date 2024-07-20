@@ -40,8 +40,11 @@ describe('Model API', () => {
 
   test('component binding', async () => {
     const wrapper = mount(Component, { props: { modelValue: { name: 'barney' } } })
+    await flushPromises()
     await nextTick()
     expect(wrapper.find('input').element.value).toBe('barney')
-    console.log(wrapper.html())
+    expect(wrapper.find('[data-testid="name-error"]').exists()).toBe(false)
+    /** The model doesn't have age defined. */
+    expect(wrapper.find('[data-testid="age-error"]').exists()).toBe(true)
   })
 })

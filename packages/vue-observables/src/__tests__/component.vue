@@ -21,10 +21,27 @@ const vm = model<ViewModel>(modelValue, obj => validate(obj, schema))
     v-for="(name, key) in [vm('name')]"
     :key
   >
-    <label test-id="name">{{ name.value }}</label>
+    <label data-testid="name">{{ name.value }}</label>
     <input v-model="name.value" />
-    <div v-if="name.error">
+    <div
+      v-if="name.error"
+      data-testid="name-error"
+    >
       {{ name.error }}
+    </div>
+  </div>
+
+  <div
+    v-for="(age, key) in [vm('age')]"
+    :key
+  >
+    <label data-testid="age">{{ age.value }}</label>
+    <input v-model="age.value" />
+    <div
+      v-if="age.error"
+      data-testid="age-error"
+    >
+      {{ age.error }}
     </div>
   </div>
 </template>
