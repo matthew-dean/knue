@@ -32,7 +32,6 @@ function isNumeric(val: unknown) {
   /** TypeScript doesn't like this but too bad */
   return !isNaN(val as unknown as number) && !isNaN(parseFloat(val))
 }
-
 /**
  * Mimics Knockout's API for getting / setting
  */
@@ -57,9 +56,9 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
     }
   }
 
-  function getterSetter(): T
-  function getterSetter(value: T): void
-  function getterSetter(value?: T) {
+  function observable(): T
+  function observable(value: T): void
+  function observable(value?: T) {
     if (arguments.length === 0) {
       return vueObj.value
     }
@@ -78,7 +77,7 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
     watch(vueObj, callback)
   }
 
-  Object.defineProperties(getterSetter, {
+  Object.defineProperties(observable, {
     [OBSERVABLE]: {
       value: true
     },
@@ -100,7 +99,7 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
            * Make sure that re-bound functions are also wrapped in this proxy
            */
           return function(thisVal: any) {
-            return new Proxy(getterSetter.bind(thisVal), proxyHandler)
+            return new Proxy(observable.bind(thisVal), proxyHandler)
           }
         case 'peek':
           /** Peek at the private Vue value */
@@ -117,6 +116,10 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
         /** Additional API */
         case 'silentSet':
           return (value: T) => { setValue(value, true) }
+        case 'extend':
+          return (extender: Record<string, any>) => {
+            constructorFn[EXTENDERS_KEY].push(extender)
+          }
       }
 
       /** In Knockout, array functions are available on the observable */
@@ -195,7 +198,7 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
     }
   }
 
-  const proxiedValue = new Proxy(getterSetter, proxyHandler) as Subscribable<T>
+  const proxiedValue = new Proxy(observable, proxyHandler) as Subscribable<T>
 
   return proxiedValue
 }

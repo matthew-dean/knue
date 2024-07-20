@@ -51,6 +51,9 @@ importers:
       eslint-plugin-vue:
         specifier: ~9.20.0
         version: 9.20.0(eslint@8.56.0)
+      type-fest:
+        specifier: ~4.22.1
+        version: 4.22.1
       typescript:
         specifier: ~5.3.3
         version: 5.3.3
@@ -2664,6 +2667,11 @@ packages:
 
   /type-fest@4.10.1:
     resolution: {integrity: sha512-7ZnJYTp6uc04uYRISWtiX3DSKB/fxNQT0B5o1OUeCqiQiwF+JC9+rJiZIDrPrNCLLuTqyQmh4VdQqh/ZOkv9MQ==}
+    engines: {node: '>=16'}
+    dev: true
+
+  /type-fest@4.22.1:
+    resolution: {integrity: sha512-9tHNEa0Ov81YOopiVkcCJVz5TM6AEQ+CHHjFIktqPnE3NV0AHIkx+gh9tiCl58m/66wWxkOC9eltpa75J4lQPA==}
     engines: {node: '>=16'}
     dev: true
 
