@@ -1,20 +1,16 @@
 import {
+  ref,
   shallowRef,
   shallowReactive,
-  type ComputedRef,
-  type ShallowRef,
   computed as vueComputed,
   type ComputedGetter,
   type WritableComputedOptions,
   type DebuggerOptions,
-  type WritableComputedRef,
   type ComputedSetter
 } from 'vue'
 import type { RefLike } from './proxy'
-import { getProxy, COMPUTED, OBSERVABLE } from './proxy'
-import { ReactiveFlags, EXTENDERS_KEY } from './constants'
-
-export { EXTENDERS_KEY }
+// import type { ExtendFunction } from './extend'
+import { getProxy, COMPUTED, OBSERVABLE, READONLY } from './proxy'
 
 const { isArray } = Array
 
@@ -38,6 +34,7 @@ export interface ExtendedArray<T> extends Array<T> {
   remove(removeFunction: (item: T) => boolean): T[]
 }
 
+/** @todo `ExtendFunction` & { */
 export type Writable<T> = {
   (value: T): void
   silentSet(value: T): void
@@ -45,50 +42,44 @@ export type Writable<T> = {
   T extends Array<infer I>
     ? ExtendedArray<I> : unknown)
 
-export type Observable<T> = Subscribable<T> & Writable<T> & ShallowRef<T>
+export type Observable<T> = Subscribable<T> & Writable<T>
 export type ObservableArray<T> = Observable<T[]>
-export type Computed<T> = Subscribable<T> & ComputedRef<T>
-export type WritableComputed<T> = Subscribable<T> & Writable<T> & WritableComputedRef<T>
+export type Computed<T> = Subscribable<T>
+export type WritableComputed<T> = Subscribable<T> & Writable<T>
 
-export type SubscribableFn<T extends ((...args: any[]) => any) = ((...args: any[]) => any)> =
-  T & {
-    [EXTENDERS_KEY]: Array<Record<string, any>>
+export function observable<T>(): Observable<T | undefined>
+export function observable<T>(value: T): Observable<T>
+export function observable<T>(value?: T) {
+  if (arguments.length === 0) {
+    const vueObj = ref<T | undefined>() as RefLike<T>
+    return getProxy<T>(vueObj) as Observable<T | undefined>
   }
-
-const wrapSubscribable = <T extends (...args: any[]) => any>(
-  sub: T
-) => {
-  (sub as any)[EXTENDERS_KEY] = []
-  return sub as SubscribableFn<T>
+  const vueObj = ref<T>(value as T) as RefLike<T>
+  return getProxy<T>(vueObj) as Observable<T>
 }
 
-function observable<T>(): Observable<T | undefined>
-function observable<T>(value: T): Observable<T>
-function observable<T>(value?: T) {
+export function shallowObservable<T>(): Observable<T | undefined>
+export function shallowObservable<T>(value: T): Observable<T>
+export function shallowObservable<T>(value?: T) {
   if (arguments.length === 0) {
     const vueObj = shallowRef<T | undefined>() as RefLike<T>
-    return getProxy<T>(vueObj, observableWrapper) as Observable<T | undefined>
+    return getProxy<T>(vueObj) as Observable<T | undefined>
   }
   value = typeof value === 'object' && value !== null ? shallowReactive(value) : value
   const vueObj = shallowRef<T>(value as T) as RefLike<T>
-  return getProxy<T>(vueObj, observableWrapper) as Observable<T>
+  return getProxy<T>(vueObj) as Observable<T>
 }
-
-const observableWrapper = wrapSubscribable(observable)
-export { observableWrapper as observable }
 
 /**
- * This is similar to observable, except, like Knockout, an empty
- * value defaults to an empty array.
+ * This is basically a convenience function for the Knockout API.
+ * It's the same as an observable except defaults to an empty array.
+ * Like Knockout, it's contents are always shallow-ly reactive.
  */
-function observableArray<T>(value: T[] = []): ObservableArray<T> {
+export function observableArray<T>(value: T[] = []): ObservableArray<T> {
   const vueObj = shallowRef<T[]>(shallowReactive(value)) as RefLike<T[]>
 
-  return getProxy(vueObj, observableArrayWrapper) as ObservableArray<T>
+  return getProxy(vueObj) as ObservableArray<T>
 }
-
-const observableArrayWrapper = wrapSubscribable(observableArray)
-export { observableArrayWrapper as observableArray }
 
 export interface WritableKnockoutOptions<T> {
   read: ComputedGetter<T>
@@ -106,13 +97,13 @@ export interface WritableKnockoutOptions<T> {
 
 export type WriteableOptions<T> = WritableKnockoutOptions<T> | WritableComputedOptions<T>
 
-function computed<T>(getter: ComputedGetter<T>, debugOptions?: DebuggerOptions): Computed<T>
-function computed<T>(options: WriteableOptions<T>, debugOptions?: DebuggerOptions): WritableComputed<T>
-function computed<T>(options: ComputedGetter<T> | WriteableOptions<T>, debugOptions?: DebuggerOptions): Computed<T> | WritableComputed<T> {
+export function computed<T>(getter: ComputedGetter<T>, debugOptions?: DebuggerOptions): Computed<T>
+export function computed<T>(options: WriteableOptions<T>, debugOptions?: DebuggerOptions): WritableComputed<T>
+export function computed<T>(options: ComputedGetter<T> | WriteableOptions<T>, debugOptions?: DebuggerOptions): Computed<T> | WritableComputed<T> {
   // let com: ComputedRef<T> | WritableComputedRef<T>
   if (typeof options === 'function') {
     const com = vueComputed(options, debugOptions) as RefLike<T>
-    return getProxy<T>(com, computedWrapper, true) as Computed<T>
+    return getProxy<T>(com, true) as Computed<T>
   }
   let get = 'read' in options ? options.read : options.get
   if ('owner' in options) {
@@ -127,12 +118,9 @@ function computed<T>(options: ComputedGetter<T> | WriteableOptions<T>, debugOpti
     ? getProxy<T>(vueComputed({
       get,
       set
-    }, debugOptions), computedWrapper, true) as WritableComputed<T>
-    : getProxy<T>(vueComputed(get, debugOptions), computedWrapper, true) as Computed<T>
+    }, debugOptions), true, true) as WritableComputed<T>
+    : getProxy<T>(vueComputed(get, debugOptions), true) as Computed<T>
 }
-
-const computedWrapper = wrapSubscribable(computed)
-export { computedWrapper as computed }
 
 export function isObservable(obj: unknown): obj is Observable<any> {
   return !!obj && typeof obj === 'function' && OBSERVABLE in obj
@@ -143,7 +131,7 @@ export function isObservableArray(obj: unknown): obj is ObservableArray<any> {
 }
 
 export function isWritableObservable(obj: any): obj is Observable<any> | WritableComputed<any> {
-  return isObservable(obj) && !(obj as any)[ReactiveFlags.IS_READONLY]
+  return isObservable(obj) && !(obj as any)[READONLY]
 }
 
 export function isComputed(obj: any): obj is Computed<any> {

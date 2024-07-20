@@ -4,16 +4,16 @@ import {
   type ShallowRef,
   type ComputedRef,
   type WritableComputedRef,
-  shallowReactive,
   watch
 } from 'vue'
-import { type Subscribable, type SubscribableFn } from '.'
-import { ReactiveFlags, EXTENDERS_KEY } from './constants'
+import { type Subscribable } from '.'
 import remove from 'lodash/remove'
 
 export const COMPUTED = Symbol('computed')
 export const OBSERVABLE = Symbol('observable')
 export const SUBSCRIBERS = Symbol('subscribers')
+export const EXTENDERS = Symbol('extenders')
+export const READONLY = Symbol('readonly')
 
 export type RefLike<T> = ShallowRef<T> | ComputedRef<T> | WritableComputedRef<T>
 
@@ -38,14 +38,11 @@ function isNumeric(val: unknown) {
 export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   vueObj: V,
-  constructorFn: SubscribableFn,
-  computed: boolean = false
+  computed: boolean = false,
+  writeable: boolean = false
 ) => {
   function setValue(value: any, silent: boolean = false) {
-    if (!(vueObj as any)[ReactiveFlags.IS_READONLY]) {
-      value = typeof value === 'object' && value !== null
-        ? shallowReactive(value)
-        : value
+    if (!(observable as any)[READONLY]) {
       if (silent) {
         (vueObj as any)._value = value
         return
@@ -81,6 +78,12 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
     [OBSERVABLE]: {
       value: true
     },
+    [READONLY]: {
+      value: computed && !writeable
+    },
+    [EXTENDERS]: {
+      value: []
+    },
     [COMPUTED]: {
       value: computed
     },
@@ -92,6 +95,11 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
   const proxyHandler: ProxyHandler<any> = {
     get(target, p: string) {
       const currentVal = (vueObj as any)._value
+
+      /** Ref-like API */
+      if (p === 'value') {
+        return vueObj.value
+      }
       /** Knockout API */
       switch (p) {
         case 'bind':
@@ -117,8 +125,9 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
         case 'silentSet':
           return (value: T) => { setValue(value, true) }
         case 'extend':
-          return (extender: Record<string, any>) => {
-            constructorFn[EXTENDERS_KEY].push(extender)
+          return (fns: any[]) => {
+            (observable as any)[EXTENDERS].push(...fns)
+            return observable
           }
       }
 
@@ -151,33 +160,14 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
         }
       }
 
-      for (const extenders of constructorFn[EXTENDERS_KEY]) {
-        if (p in extenders) {
-          const value = extenders[p]
-          if (typeof value === 'function') {
-            return value.bind(proxiedValue)
-          }
-          return value
-        }
-      }
-
-      for (const extenders of constructorFn[EXTENDERS_KEY]) {
-        if (p in extenders) {
-          const value = extenders[p]
-          if (typeof value === 'function') {
-            return value.bind(proxiedValue)
-          }
-          return value
-        }
-      }
       /**
        * Return all Vue ref properties, so that they
        * can be tested with other Vue utilities.
        */
       // eslint-disable-next-line vue/no-ref-as-operand
-      if (p in vueObj) {
-        return vueObj[p as keyof typeof vueObj]
-      }
+      // if (p in vueObj) {
+      //   return vueObj[p as keyof typeof vueObj]
+      // }
       /** Return any arbitrary props */
       if (p in target) {
         return target[p]
@@ -191,7 +181,7 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
        * As far as I know, `value` should be the only
        * writeable property on a Vue ref. Everything
        * else is arbitrary, so we'll set it on the
-       * getterSetter function
+       * observable object
        */
       target[p] = value
       return true

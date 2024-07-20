@@ -1,13 +1,15 @@
 {
   "compilerOptions": {
     "target": "ESNEXT",
-    "module": "commonjs",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "outDir": "./dist",
     "strict": true,
     "strictNullChecks": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
 		"types": [
       "node"
     ]

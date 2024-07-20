@@ -19,6 +19,10 @@
   },
   "devDependencies": {
     "@types/lodash": "~4.14.202",
+    "@vitejs/plugin-vue": "~5.0.5",
+    "@vue/test-utils": "~2.4.6",
+    "happy-dom": "~14.12.3",
+    "valibot": "~0.36.0",
     "vue": "~3.4.11"
   },
   "peerDependencies": {
