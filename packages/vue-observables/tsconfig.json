@@ -3,9 +3,12 @@
   "compilerOptions": {
     "composite": true,
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "."
   },
   "include": [
+    "./*.ts",
+    "./test/**/*.ts",
+    "./test/**/*.vue",
     "./src/**/*.ts",
     "./src/**/*.vue"
   ],

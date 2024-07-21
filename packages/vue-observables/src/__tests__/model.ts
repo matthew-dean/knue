@@ -26,7 +26,7 @@ describe('Model API', () => {
       age: number()
     })
     type MyModel = InferOutput<typeof schema>
-    const state = model<MyModel>({}, obj => validate(obj, schema))
+    const state = model<MyModel>({}, validate(schema))
     await flushPromises()
     expect(state.isValid).toBe(false)
     expect(state.validatedValue).toBeUndefined()

@@ -4,4 +4,4 @@ export class ValidationError extends Error {
 
 type BaseValidationOutput = [ValidationError, null | undefined] | [null | undefined, any]
 export type ValidationOutput = BaseValidationOutput | Promise<BaseValidationOutput>
-export type ValidationFunction = (value: unknown, ...args: any[]) => ValidationOutput
+export type ValidationFunction = (...args: any[]) => (data: unknown, path: string) => ValidationOutput

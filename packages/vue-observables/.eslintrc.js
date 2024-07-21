@@ -9,6 +9,9 @@ module.exports = {
         parser: '@typescript-eslint/parser',
         project: './tsconfig.json',
         extraFileExtensions: ['.vue']
+      },
+      rules: {
+        '@typescript-eslint/triple-slash-reference': 'off'
       }
     }
   ]

@@ -13,7 +13,7 @@ type ViewModel = InferOutput<typeof schema>
 
 const modelValue = defineModel<Partial<ViewModel>>({ required: true })
 
-const vm = model<ViewModel>(modelValue, obj => validate(obj, schema))
+const vm = model<ViewModel>(modelValue, validate(schema))
 </script>
 
 <template>
