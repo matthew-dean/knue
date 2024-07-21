@@ -20,7 +20,10 @@ const vm = model<ViewModel>({
   <main>
     <div>
       <p>Name: {{ vm('name').value }}</p>
-      <input v-model="vm('name').value" />
+      <input
+        v-model="vm('name').value"
+        v-on="vm('name').bind"
+      />
       <div
         class="error"
         v-if="vm('name').error"
@@ -34,6 +37,7 @@ const vm = model<ViewModel>({
       <input
         type="number"
         v-model="vm('age').value"
+        v-on="vm('age').bind"
       />
       <div
         class="error"

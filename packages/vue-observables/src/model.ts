@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { ref, computed, isRef, shallowRef, type Ref } from 'vue'
+import { ref, computed, isRef, shallowRef, triggerRef, type Ref } from 'vue'
 import type { PartialDeep, Paths, Get } from 'type-fest'
 import get from 'lodash/get'
 import set from 'lodash/set'
@@ -10,10 +10,25 @@ export interface BaseModel<T extends Record<string, any>> {
   (): PartialDeep<T>
   <U extends Exclude<Paths<T>, number>>(path: U): {
     value: Get<T, U>
-    error: string | undefined
+    readonly error: string | undefined
+    readonly isValid: boolean
+    readonly touched: boolean
+    readonly bind: {
+      input: () => void
+      change: () => void
+    }
+    readonly onInput: () => void
+    readonly onChange: () => void
+    readonly validate: () => void
   }
   value: PartialDeep<T>
-  errors: Record<string, string>
+  readonly errors: Record<string, string | undefined>
+  /** First error */
+  readonly error: string | undefined
+  readonly touched: boolean
+  readonly isValid: boolean
+  readonly validatedValue: T | undefined
+  readonly validate: () => void
 }
 
 type Model<T extends Record<string, any>> = BaseModel<T> & ({
@@ -40,17 +55,18 @@ export function model<
 ) {
   options ??= {}
   const inObj = (
-    isRef(initialValue) ? initialValue : ref(initialValue ?? {})) as Ref<PartialDeep<T>>
+    isRef(initialValue)
+      ? initialValue
+      : shallowRef(initialValue ?? {})
+  ) as Ref<PartialDeep<T>>
   const outObj = shallowRef<GetValueType<T>>()
   const errors = ref<Record<string, string | undefined>>({})
   const error = computed(() => {
     return Object.values(errors.value)[0]
   })
   const modelValid = computed(() => Object.values(errors.value).length === 0)
-  /** Create reactions for retrieved paths */
-  const reactivePathMap = new Map<string, Ref<number>>()
 
-  const processValidation = async (data: any, path: string) => {
+  const processValidation = async (data: any, path: string = '') => {
     /** Validating the root means wiping all errors */
     if (!path) {
       errors.value = {}
@@ -85,46 +101,78 @@ export function model<
     }
   }
 
+  /** Flag if values have been validated once */
+  const flaggedSet = new Set<string>()
+  /** Value has been altered */
+  const touchedSet = new Set<string>()
+
+  const isFlagged = (path: string) => {
+    for (const key of flaggedSet.keys()) {
+      if (path.startsWith(key)) {
+        return true
+      }
+    }
+  }
+
+  const createAccessors = (path: string) => {
+    return {
+      get value() {
+        return get(inObj.value, path)
+      },
+      set value(value: any) {
+        set(inObj.value, path, value)
+        triggerRef(inObj)
+        touchedSet.add(path)
+      },
+      get error() {
+        return errors.value[path]
+      },
+      get isValid() {
+        return !errors.value[path]
+      },
+      get touched() {
+        return touchedSet.has(path)
+      },
+      get bind() {
+        const self = this // eslint-disable-line @typescript-eslint/no-this-alias
+        return {
+          input: self.onInput.bind(self),
+          change: self.onChange.bind(self),
+          blur: self.onChange.bind(self)
+        }
+      },
+      onInput() {
+        if (this.error ?? isFlagged(path)) {
+          this.validate()
+        }
+      },
+      onChange() {
+        if (touchedSet.has(path)) {
+          this.validate()
+        }
+      },
+      validate() {
+        if (validator) {
+          flaggedSet.add(path)
+          void processValidation(get(inObj.value, path), path)
+        }
+      }
+    }
+  }
+
+  /** Create accessors lazily for retrieved paths */
+  const accessorMap = new Map<string, ReturnType<typeof createAccessors>>()
+
   const modelGetter = function(path?: Exclude<Paths<GetValueType<T>>, number>) {
     if (arguments.length === 0) {
       return inObj.value
     }
-    return {
-      get value() {
-        let reaction = reactivePathMap.get(path!)
-        if (!reaction) {
-          reaction = ref(1)
-          reactivePathMap.set(path!, reaction)
-        }
-        /**
-         * We need to access the value of the reaction to trigger the watcher
-         */
-        reaction.value // eslint-disable-line @typescript-eslint/no-unused-expressions
-        return get(inObj.value, path!)
-      },
-      set value(value: any) {
-        let reaction = reactivePathMap.get(path!)
-        if (!reaction) {
-          reaction = ref(0)
-          reactivePathMap.set(path!, reaction)
-        }
-        /**
-         * Set the reaction value to trigger dependencies
-         */
-        reaction.value++
-        set(inObj.value, path!, value)
-        /** Trigger validation */
-        if (validator) {
-          void processValidation(value, path!)
-        }
-      },
-      get error() {
-        return errors.value[path!]
-      },
-      get isValid() {
-        return !errors.value[path!]
-      }
+    let accessor = accessorMap.get(path!)
+    if (!accessor) {
+      accessor = createAccessors(path!)
+      accessorMap.set(path!, accessor)
     }
+    return accessor
   } as Model<T>
 
   Object.defineProperties(modelGetter, {
@@ -135,7 +183,14 @@ export function model<
         inObj.value = value
       }
     },
+    validate: {
+      enumerable: true,
+      value() {
+        void processValidation(inObj.value)
+      }
+    },
     validatedValue: {
+      enumerable: true,
       get: () => outObj.value
     },
     isValid: {
@@ -154,8 +209,15 @@ export function model<
       }
     },
     error: {
+      enumerable: true,
       get() {
         return error.value
+      }
+    },
+    touched: {
+      enumerable: true,
+      get() {
+        return touchedSet.size > 0
       }
     }
   })

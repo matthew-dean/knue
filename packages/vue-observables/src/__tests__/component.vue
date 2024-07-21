@@ -22,7 +22,10 @@ const vm = model<ViewModel>(modelValue, validate(schema))
     :key
   >
     <label data-testid="name">{{ name.value }}</label>
-    <input v-model="name.value" />
+    <input
+      data-testid="name-input"
+      v-model="name.value"
+    />
     <div
       v-if="name.error"
       data-testid="name-error"
@@ -36,7 +39,10 @@ const vm = model<ViewModel>(modelValue, validate(schema))
     :key
   >
     <label data-testid="age">{{ age.value }}</label>
-    <input v-model="age.value" />
+    <input
+      data-testid="age-input"
+      v-model="age.value"
+    />
     <div
       v-if="age.error"
       data-testid="age-error"
@@ -44,4 +50,11 @@ const vm = model<ViewModel>(modelValue, validate(schema))
       {{ age.error }}
     </div>
   </div>
+  <button
+    data-testid="submit"
+    type="button"
+    @click="vm.validate()"
+  >
+    Submit
+  </button>
 </template>
