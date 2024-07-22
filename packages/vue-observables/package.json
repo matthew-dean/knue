@@ -1,6 +1,6 @@
 {
   "name": "vue-observables",
-  "version": "1.0.0-beta.3",
+  "version": "1.0.0-beta.",
   "description": "Knockout-like functional syntax for Vue.js",
   "license": "MIT",
   "type": "module",
@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "ci": "pnpm build && pnpm test",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "rm -rf ../tsconfig.build.tsbuildinfo && rm -rf tsconfig.tsbuildinfo && pnpm run build",
     "build": "pnpm compile",
     "compile": "vue-tsc -b tsconfig.build.json",
     "test": "cross-env TEST=true vitest --watch=false",
