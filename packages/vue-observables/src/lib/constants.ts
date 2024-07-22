@@ -4,6 +4,10 @@
  */
 export const enum ReactiveFlags {
   SKIP = '__v_skip',
+
+  /** Note: this one isn't in Vue as a constant */
+  IS_REF = '__v_isRef',
+
   IS_REACTIVE = '__v_isReactive',
   IS_READONLY = '__v_isReadonly',
   IS_SHALLOW = '__v_isShallow',

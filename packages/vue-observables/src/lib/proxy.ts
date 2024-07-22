@@ -4,9 +4,11 @@ import {
   type ShallowRef,
   type ComputedRef,
   type WritableComputedRef,
+  shallowReactive,
   watch
 } from 'vue'
 import { type Subscribable } from '.'
+import { ReactiveFlags } from './constants'
 import remove from 'lodash/remove'
 
 export const COMPUTED = Symbol('computed')
@@ -32,17 +34,44 @@ function isNumeric(val: unknown) {
   /** TypeScript doesn't like this but too bad */
   return !isNaN(val as unknown as number) && !isNaN(parseFloat(val))
 }
+
+/**
+ * @see https://stackoverflow.com/questions/31538010/test-if-a-variable-is-a-primitive-rather-than-an-object
+ */
+function isPrimitive(val: any) {
+  try {
+    '' in val // eslint-disable-line @typescript-eslint/no-unused-expressions
+    return false
+  } catch (e) {
+    return true
+  }
+}
 /**
  * Mimics Knockout's API for getting / setting
  */
 export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   vueObj: V,
-  computed: boolean = false,
-  writeable: boolean = false
+  {
+    computed = false,
+    writeable = false,
+    shallow = false
+  }: {
+    computed?: boolean
+    writeable?: boolean
+    shallow?: boolean
+  } = {}
 ) => {
   function setValue(value: any, silent: boolean = false) {
+    /** Return a reactive value, if it's object-like */
+    const tryReactiveValue = (value: any) => {
+      if (isPrimitive(value)) {
+        return value
+      }
+      return shallowReactive(value)
+    }
     if (!(observable as any)[READONLY]) {
+      value = tryReactiveValue(value)
       if (silent) {
         (vueObj as any)._value = value
         return
@@ -96,12 +125,18 @@ export const getProxy = <T, V extends RefLike<T> = RefLike<T>>(
     get(target, p: string) {
       const currentVal = (vueObj as any)._value
 
-      /** Ref-like API */
-      if (p === 'value') {
-        return vueObj.value
-      }
-      /** Knockout API */
       switch (p) {
+        /** Vue API */
+        case 'value':
+          return vueObj.value
+        case ReactiveFlags.IS_REF:
+          return true
+        case ReactiveFlags.IS_READONLY:
+          return (observable as any)[READONLY]
+        case ReactiveFlags.IS_SHALLOW:
+          return (vueObj as any)[ReactiveFlags.IS_SHALLOW]
+
+        /** Knockout API */
         case 'bind':
           /**
            * Make sure that re-bound functions are also wrapped in this proxy

@@ -1,2 +1,4 @@
 adapters/
 lib/
+!src/lib/
+!src/adapters/

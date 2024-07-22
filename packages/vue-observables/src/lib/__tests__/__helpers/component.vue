@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { model } from '../../model'
-import { createValidator, createInitializer } from '../../adapters/valibot'
+import { createValidator, createInitializer } from '../../../adapters/valibot'
 import { schema } from './schema'
 import { type InferOutput } from 'valibot'
 import Address from './address.vue'

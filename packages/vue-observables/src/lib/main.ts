@@ -1,12 +1,13 @@
 import {
-  ref,
   shallowRef,
-  shallowReactive,
   computed as vueComputed,
   type ComputedGetter,
   type WritableComputedOptions,
   type DebuggerOptions,
-  type ComputedSetter
+  type ComputedSetter,
+  type Ref,
+  type ComputedRef,
+  type WritableComputedRef
 } from 'vue'
 import type { RefLike } from './proxy'
 // import type { ExtendFunction } from './extend'
@@ -16,6 +17,7 @@ const { isArray } = Array
 
 export interface Subscribable<T> {
   (): T
+  value: T
   dispose(): void
   subscribe(
     callback: (newValue: T) => void | Promise<void>,
@@ -42,43 +44,39 @@ export type Writable<T> = {
   T extends Array<infer I>
     ? ExtendedArray<I> : unknown)
 
-export type Observable<T> = Subscribable<T> & Writable<T>
-export type ObservableArray<T> = Observable<T[]>
-export type Computed<T> = Subscribable<T>
-export type WritableComputed<T> = Subscribable<T> & Writable<T>
+export type Observable<T> = Subscribable<T> & Writable<T> & Ref<T>
+export type ObservableArray<T> = Observable<T[]> & Ref<T[]>
+export type Computed<T> = Subscribable<T> & ComputedRef<T>
+export type WritableComputed<T> = Subscribable<T> & Writable<T> & WritableComputedRef<T>
+
+function createObservable<T>(value: T, empty?: boolean, shallow?: boolean): Observable<T> | Observable<T | undefined> {
+  const vueObj: RefLike<T> = shallowRef<T>() as RefLike<T>
+  const proxy = getProxy<T>(vueObj, { shallow }) as Observable<T>
+  if (empty) {
+    return proxy as Observable<T | undefined>
+  }
+  proxy.silentSet(value)
+  return proxy
+}
 
 export function observable<T>(): Observable<T | undefined>
 export function observable<T>(value: T): Observable<T>
 export function observable<T>(value?: T) {
-  if (arguments.length === 0) {
-    const vueObj = ref<T | undefined>() as RefLike<T>
-    return getProxy<T>(vueObj) as Observable<T | undefined>
-  }
-  const vueObj = ref<T>(value as T) as RefLike<T>
-  return getProxy<T>(vueObj) as Observable<T>
+  return createObservable(value, arguments.length === 0)
 }
 
-export function shallowObservable<T>(): Observable<T | undefined>
-export function shallowObservable<T>(value: T): Observable<T>
-export function shallowObservable<T>(value?: T) {
-  if (arguments.length === 0) {
-    const vueObj = shallowRef<T | undefined>() as RefLike<T>
-    return getProxy<T>(vueObj) as Observable<T | undefined>
-  }
-  value = typeof value === 'object' && value !== null ? shallowReactive(value) : value
-  const vueObj = shallowRef<T>(value as T) as RefLike<T>
-  return getProxy<T>(vueObj) as Observable<T>
-}
+// export function shallowObservable<T>(): Observable<T | undefined>
+// export function shallowObservable<T>(value: T): Observable<T>
+// export function shallowObservable<T>(value?: T) {
+//   return createObservable(value, arguments.length === 0, true)
+// }
 
 /**
  * This is basically a convenience function for the Knockout API.
  * It's the same as an observable except defaults to an empty array.
- * Like Knockout, it's contents are always shallow-ly reactive.
  */
 export function observableArray<T>(value: T[] = []): ObservableArray<T> {
-  const vueObj = shallowRef<T[]>(shallowReactive(value)) as RefLike<T[]>
-
-  return getProxy(vueObj) as ObservableArray<T>
+  return createObservable(value) as ObservableArray<T>
 }
 
 export interface WritableKnockoutOptions<T> {
@@ -103,7 +101,7 @@ export function computed<T>(options: ComputedGetter<T> | WriteableOptions<T>, de
   // let com: ComputedRef<T> | WritableComputedRef<T>
   if (typeof options === 'function') {
     const com = vueComputed(options, debugOptions) as RefLike<T>
-    return getProxy<T>(com, true) as Computed<T>
+    return getProxy<T>(com, { computed: true }) as Computed<T>
   }
   let get = 'read' in options ? options.read : options.get
   if ('owner' in options) {
@@ -118,8 +116,8 @@ export function computed<T>(options: ComputedGetter<T> | WriteableOptions<T>, de
     ? getProxy<T>(vueComputed({
       get,
       set
-    }, debugOptions), true, true) as WritableComputed<T>
-    : getProxy<T>(vueComputed(get, debugOptions), true) as Computed<T>
+    }, debugOptions), { computed: true, writeable: true }) as WritableComputed<T>
+    : getProxy<T>(vueComputed(get, debugOptions), { computed: true }) as Computed<T>
 }
 
 export function isObservable(obj: unknown): obj is Observable<any> {

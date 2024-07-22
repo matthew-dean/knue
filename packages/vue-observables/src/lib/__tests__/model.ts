@@ -2,11 +2,11 @@ import { describe, test, expect, vi } from 'vitest'
 import {
   model
 } from '../model'
-import { createValidator } from '../adapters/valibot'
+import { createValidator } from '../../adapters/valibot'
 import { object, string, number, type InferOutput } from 'valibot'
 import { nextTick } from 'vue'
 import { flushPromises, mount, type DOMWrapper } from '@vue/test-utils'
-import Component from './components/component.vue'
+import Component from './__helpers/component.vue'
 
 describe('Model API', () => {
   test('model', () => {
