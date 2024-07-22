@@ -1,19 +1,18 @@
 <script setup lang="ts">
-import { model } from '../model'
-import { validate } from '../adapters/valibot'
-
-import { object, string, number, type InferOutput } from 'valibot'
-
-const schema = object({
-  name: string(),
-  age: number()
-})
+import { model } from '../../model'
+import { createValidator, createInitializer } from '../../adapters/valibot'
+import { schema } from './schema'
+import { type InferOutput } from 'valibot'
+import Address from './address.vue'
 
 type ViewModel = InferOutput<typeof schema>
 
 const modelValue = defineModel<Partial<ViewModel>>({ required: true })
 
-const vm = model<ViewModel>(modelValue, validate(schema))
+const vm = model<ViewModel>(modelValue, {
+  validator: createValidator(schema),
+  initializer: createInitializer(schema)
+})
 </script>
 
 <template>
@@ -50,11 +49,12 @@ const vm = model<ViewModel>(modelValue, validate(schema))
       {{ age.error }}
     </div>
   </div>
+  <Address v-model="vm('address').value" />
   <button
-    data-testid="submit"
+    data-testid="main-submit"
     type="button"
     @click="vm.validate()"
   >
-    Submit
+    Validate Main
   </button>
 </template>

@@ -4,6 +4,7 @@ import type { PartialDeep, Paths, Get } from 'type-fest'
 import get from 'lodash/get'
 import set from 'lodash/set'
 import isObject from 'lodash/isObject'
+import merge from 'lodash/merge'
 import type { ValidationError } from './validation'
 
 export interface BaseModel<T extends Record<string, any>> {
@@ -47,18 +48,26 @@ export function model<
   const T extends Record<string, any>
 >(
   initialValue?: PartialDeep<T> | Ref<PartialDeep<T>>,
-  validator?: (data: unknown, path: string) => ([ValidationError, null | undefined] | [null | undefined, any]) | Promise<([ValidationError, null | undefined] | [null | undefined, any])>,
   options?: {
+    /** Creates an initial structure */
+    initializer?: () => PartialDeep<T>
+    /** Validates paths when they change */
+    validator?: (data: unknown, path: string) => ([ValidationError, null | undefined] | [null | undefined, any]) | Promise<([ValidationError, null | undefined] | [null | undefined, any])>
     /** @default false */
     validateOnMount?: boolean
   }
 ) {
   options ??= {}
+  const { validator, initializer } = options
   const inObj = (
     isRef(initialValue)
       ? initialValue
-      : shallowRef(initialValue ?? {})
+      : shallowRef(initialValue)
   ) as Ref<PartialDeep<T>>
+
+  /** Create starting object structure */
+  inObj.value = merge(inObj.value ?? {}, initializer?.())
+
   const outObj = shallowRef<GetValueType<T>>()
   const errors = ref<Record<string, string | undefined>>({})
   const error = computed(() => {

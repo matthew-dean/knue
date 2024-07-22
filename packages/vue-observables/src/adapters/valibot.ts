@@ -1,15 +1,15 @@
-import { safeParseAsync, type GenericSchema, getDotPath } from 'valibot'
+import { safeParseAsync, type GenericSchema, getDotPath, getDefaults } from 'valibot'
 import { ValidationError, type ValidationFunction } from '../validation'
 import get from 'lodash/get'
 
-export const validate: ValidationFunction = function<
+export const createValidator: ValidationFunction = function<
   S extends GenericSchema = GenericSchema
 >(schema: S) {
-  return async (data: unknown, path: string): Promise<[ValidationError, null | undefined] | [null | undefined, any]> => {
+  return async (data: unknown, initialPath: string): Promise<[ValidationError, null | undefined] | [null | undefined, any]> => {
     let localSchema = schema
-    if (path) {
+    if (initialPath) {
       /** Get sub-schema */
-      const newPath = `entries.${path.replace(/\./g, '.entries.')}`
+      const newPath = `entries.${initialPath.replace(/\./g, '.entries.')}`
       localSchema = get(schema, newPath)
     }
     const result = await safeParseAsync(localSchema, data)
@@ -17,7 +17,7 @@ export const validate: ValidationFunction = function<
     if (!result.success) {
       const validationError = new ValidationError(result.issues[0].message)
       for (const issue of result.issues) {
-        path += `${getDotPath(issue) ?? ''}`
+        const path = initialPath + `${getDotPath(issue) ?? ''}`
         if (path) {
           validationError.errors[path] = issue.message
         }
@@ -26,4 +26,11 @@ export const validate: ValidationFunction = function<
     }
     return [null, result.output]
   }
+}
+
+export const createInitializer = function<
+  S extends GenericSchema = GenericSchema
+>(schema: S) {
+  // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
+  return () => getDefaults(schema)
 }
