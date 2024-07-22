@@ -4,24 +4,11 @@
   "description": "Knockout-like functional syntax for Vue.js",
   "license": "MIT",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": {
-        "default": "./dist/index.js",
-        "types": "./dist/index.d.ts"
-      }
-    },
-    "./adapters/*": {
-      "import": {
-        "default": "./dist/adapters/*.js",
-        "types": "./dist/adapters/*.d.ts"
-      }
-    }
-  },
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
   "files": [
-    "dist"
+    "lib",
+    "adapters"
   ],
   "scripts": {
     "ci": "pnpm build && pnpm test",

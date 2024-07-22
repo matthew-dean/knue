@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { model } from '../src'
+import { model } from '../src/lib'
 import { object, string, number, pipe, nonEmpty, trim, type InferOutput } from 'valibot'
-import { validate } from '../src/adapters/valibot'
+import { createValidator } from '../src/adapters/valibot'
 
 const schema = object({
   name: pipe(string(), trim(), nonEmpty('Name is required')),
@@ -13,7 +13,7 @@ type ViewModel = InferOutput<typeof schema>
 const vm = model<ViewModel>({
   name: '',
   age: 30
-}, validate(schema), {})
+}, { validator: createValidator(schema) })
 </script>
 
 <template>
