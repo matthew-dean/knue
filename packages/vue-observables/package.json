@@ -1,10 +1,25 @@
 {
   "name": "vue-observables",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "description": "Knockout-like functional syntax for Vue.js",
   "license": "MIT",
+  "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "default": "./dist/index.js",
+        "types": "./dist/index.d.ts"
+      }
+    },
+    "./adapters/*": {
+      "import": {
+        "default": "./dist/adapters/*.js",
+        "types": "./dist/adapters/*.d.ts"
+      }
+    }
+  },
   "files": [
     "dist"
   ],
@@ -12,14 +27,18 @@
     "ci": "pnpm build && pnpm test",
     "prepublishOnly": "npm run build",
     "build": "pnpm compile",
-    "compile": "tsc -b tsconfig.build.json",
+    "compile": "vue-tsc -b tsconfig.build.json",
     "test": "cross-env TEST=true vitest --watch=false",
     "lint:fix": "eslint --fix '**/*.{js,ts}'",
     "lint": "eslint '**/*.{js,ts}'"
   },
   "devDependencies": {
     "@types/lodash": "~4.14.202",
-    "vue": "~3.4.11"
+    "@vitejs/plugin-vue": "~5.0.5",
+    "@vue/test-utils": "~2.4.6",
+    "happy-dom": "~14.12.3",
+    "valibot": "~0.36.0",
+    "vue-tsc": "~2.0.28"
   },
   "peerDependencies": {
     "vue": ">=3.2"
