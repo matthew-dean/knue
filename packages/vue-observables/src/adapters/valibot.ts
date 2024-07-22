@@ -1,5 +1,5 @@
 import { safeParseAsync, type GenericSchema, getDotPath, getDefaults } from 'valibot'
-import { ValidationError, type ValidationFunction } from '../validation'
+import { ValidationError, type ValidationFunction } from '../lib/validation'
 import get from 'lodash/get'
 
 export const createValidator: ValidationFunction = function<

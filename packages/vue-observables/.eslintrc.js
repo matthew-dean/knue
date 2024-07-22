@@ -1,6 +1,7 @@
 module.exports = {
   extends: ['../../.eslintrc.js'],
   root: true,
+  ignorePatterns: ['lib/**', 'node_modules/**', 'adapters/**'],
   overrides: [
     {
       files: ['*.ts', '*.tsx', '*.vue'],

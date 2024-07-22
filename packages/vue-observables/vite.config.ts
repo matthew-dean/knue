@@ -7,6 +7,7 @@ export default defineConfig({
     name: 'vue-observables',
     watch: false,
     environment: 'happy-dom',
-    include: ['src/__tests__/**/*.ts']
+    include: ['src/**/__tests__/**/*.ts'],
+    exclude: ['src/**/__tests__/**/__helpers/**']
   }
 })
