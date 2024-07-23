@@ -6,11 +6,11 @@ import set from 'lodash/set'
 import isObject from 'lodash/isObject'
 import merge from 'lodash/merge'
 import type { ValidationError } from './validation'
+import { ReactiveFlags } from './constants'
 
 export interface BaseModel<T extends Record<string, any>> {
   (): PartialDeep<T>
-  <U extends Exclude<Paths<T>, number>>(path: U): {
-    value: Get<T, U>
+  <U extends Exclude<Paths<T>, number>>(path: U): Ref<Get<T, U>> & {
     readonly error: string | undefined
     readonly isValid: boolean
     readonly touched: boolean
@@ -125,6 +125,9 @@ export function model<
 
   const createAccessors = (path: string) => {
     return {
+      get [ReactiveFlags.IS_REF]() {
+        return true
+      },
       get value() {
         return get(inObj.value, path)
       },

@@ -4,20 +4,24 @@ import {
 } from '../model'
 import { createValidator } from '../../adapters/valibot'
 import { object, string, number, type InferOutput } from 'valibot'
-import { nextTick } from 'vue'
+import { watch } from 'vue'
 import { flushPromises, mount, type DOMWrapper } from '@vue/test-utils'
 import Component from './__helpers/component.vue'
 
 describe('Model API', () => {
-  test('model', () => {
+  test('model', async () => {
     interface MyModel {
       name: string
       age: number
     }
     const state = model<MyModel>({})
+    watch(state('name'), name => {
+      expect(name).toBe('John')
+    })
     state('name').value = 'John'
     state('age').value = 30
     expect(state()).toEqual({ name: 'John', age: 30 })
+    await flushPromises()
   })
 
   test('validation', async () => {
