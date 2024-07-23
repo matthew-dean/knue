@@ -15,13 +15,16 @@ describe('Model API', () => {
       age: number
     }
     const state = model<MyModel>({})
-    watch(state('name'), name => {
+    watch(state('name').ref, name => {
       expect(name).toBe('John')
+    })
+    watch(state.ref, value => {
+      expect(value.name).toBe('John')
     })
     state('name').value = 'John'
     state('age').value = 30
-    expect(state()).toEqual({ name: 'John', age: 30 })
     await flushPromises()
+    expect(state()).toEqual({ name: 'John', age: 30 })
   })
 
   test('validation', async () => {

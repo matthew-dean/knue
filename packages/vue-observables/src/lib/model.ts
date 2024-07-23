@@ -9,8 +9,19 @@ import type { ValidationError } from './validation'
 import { ReactiveFlags } from './constants'
 
 export interface BaseModel<T extends Record<string, any>> {
+  value: PartialDeep<T>
+  readonly ref: Ref<T>
+  readonly errors: Record<string, string | undefined>
+  /** First error */
+  readonly error: string | undefined
+  readonly touched: boolean
+  readonly isValid: boolean
+  readonly validatedValue: T | undefined
+  readonly validate: () => void
   (): PartialDeep<T>
-  <U extends Exclude<Paths<T>, number>>(path: U): Ref<Get<T, U>> & {
+  <U extends Exclude<Paths<T>, number>>(path: U): {
+    value: Get<T, U>
+    ref: Ref<Get<T, U>>
     readonly error: string | undefined
     readonly isValid: boolean
     readonly touched: boolean
@@ -22,14 +33,6 @@ export interface BaseModel<T extends Record<string, any>> {
     readonly onChange: () => void
     readonly validate: () => void
   }
-  value: PartialDeep<T>
-  readonly errors: Record<string, string | undefined>
-  /** First error */
-  readonly error: string | undefined
-  readonly touched: boolean
-  readonly isValid: boolean
-  readonly validatedValue: T | undefined
-  readonly validate: () => void
 }
 
 type Model<T extends Record<string, any>> = BaseModel<T> & ({
@@ -124,17 +127,34 @@ export function model<
   }
 
   const createAccessors = (path: string) => {
-    return {
-      get [ReactiveFlags.IS_REF]() {
-        return true
-      },
+    const getValue = () => get(inObj.value, path)
+    const setValue = (value: any) => {
+      set(inObj.value, path, value)
+      triggerRef(inObj)
+      touchedSet.add(path)
+    }
+
+    const refObj = {
       get value() {
-        return get(inObj.value, path)
+        return getValue()
       },
       set value(value: any) {
-        set(inObj.value, path, value)
-        triggerRef(inObj)
-        touchedSet.add(path)
+        setValue(value)
+      },
+      get [ReactiveFlags.IS_REF]() {
+        return true
+      }
+    }
+
+    return {
+      get value() {
+        return getValue()
+      },
+      set value(value: any) {
+        setValue(value)
+      },
+      get ref() {
+        return refObj
       },
       get error() {
         return errors.value[path]
@@ -188,6 +208,12 @@ export function model<
   } as Model<T>
 
   Object.defineProperties(modelGetter, {
+    ref: {
+      enumerable: true,
+      get() {
+        return inObj
+      }
+    },
     value: {
       enumerable: true,
       get: () => inObj.value,
