@@ -32,6 +32,8 @@ export interface BaseModel<T extends Record<string, any>> {
     readonly onInput: () => void
     readonly onChange: () => void
     readonly validate: () => void
+    (): Get<T, U>
+    (value: Get<T, U>): void
   }
 }
 
@@ -152,13 +154,17 @@ export function model<
   }
 
   const createAccessors = (path: string) => {
-    const getValue = () => {
-      gettingSubPath = true
-      const val = get(inObj.value, path)
-      gettingSubPath = false
-      return val
-    }
-    const setValue = (value: any) => {
+    /**
+     * Mimic observable()
+     * @todo - Make this a real observable?
+     */
+    const observable = function(value?: any) {
+      if (arguments.length === 0) {
+        gettingSubPath = true
+        const val = get(inObj.value, path)
+        gettingSubPath = false
+        return val
+      }
       set(inObj.value, path, value)
       triggerRef(inObj)
       touchedSet.add(path)
@@ -166,60 +172,88 @@ export function model<
 
     const refObj = {
       get value() {
-        return getValue()
+        return observable()
       },
       set value(value: any) {
-        setValue(value)
+        observable(value)
       },
       get [ReactiveFlags.IS_REF]() {
         return true
       }
     }
 
-    return {
-      get value() {
-        return getValue()
-      },
-      set value(value: any) {
-        setValue(value)
-      },
-      get ref() {
-        return refObj
-      },
-      get error() {
-        return errors.value[path]
-      },
-      get isValid() {
-        return !errors.value[path]
-      },
-      get touched() {
-        return touchedSet.has(path)
-      },
-      get bind() {
-        const self = this // eslint-disable-line @typescript-eslint/no-this-alias
-        return {
-          input: self.onInput.bind(self),
-          change: self.onChange.bind(self),
-          blur: self.onChange.bind(self)
+    return Object.defineProperties(observable, {
+      value: {
+        enumerable: true,
+        get() {
+          return observable()
+        },
+        set(value: any) {
+          observable(value)
         }
       },
-      onInput() {
-        if (this.error ?? isFlagged(path)) {
-          this.validate()
+      ref: {
+        enumerable: true,
+        get() {
+          return refObj
         }
       },
-      onChange() {
-        if (touchedSet.has(path)) {
-          this.validate()
+      error: {
+        enumerable: true,
+        get() {
+          return errors.value[path]
         }
       },
-      validate() {
-        if (validator) {
-          flaggedSet.add(path)
-          void processValidation(get(inObj.value, path), path)
+      isValid: {
+        enumerable: true,
+        get() {
+          return !errors.value[path]
+        }
+      },
+      touched: {
+        enumerable: true,
+        get() {
+          return touchedSet.has(path)
+        }
+      },
+      handlers: {
+        enumerable: true,
+        get() {
+          const self: any = observable
+          return {
+            input: self.onInput.bind(self),
+            change: self.onChange.bind(self),
+            blur: self.onChange.bind(self)
+          }
+        }
+      },
+      onInput: {
+        enumerable: true,
+        value() {
+          const self: any = observable
+          if (self.error ?? isFlagged(path)) {
+            self.validate()
+          }
+        }
+      },
+      onChange: {
+        enumerable: true,
+        get() {
+          if (touchedSet.has(path)) {
+            (observable as any).validate()
+          }
+        }
+      },
+      validate: {
+        enumerable: true,
+        get() {
+          if (validator) {
+            flaggedSet.add(path)
+            void processValidation(get(inObj.value, path), path)
+          }
         }
       }
-    }
+    })
   }
 
   /** Create accessors lazily for retrieved paths */

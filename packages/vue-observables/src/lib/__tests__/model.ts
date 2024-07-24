@@ -22,9 +22,10 @@ describe('Model API', () => {
       expect(value.name).toBe('John')
     })
     state('name').value = 'John'
-    state('age').value = 30
+    state('age')(30)
     await flushPromises()
     expect(state()).toEqual({ name: 'John', age: 30 })
+    expect(state('age')()).toBe(30)
   })
 
   test('validation', async () => {
