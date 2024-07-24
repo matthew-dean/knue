@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { ref, computed, isRef, shallowRef, triggerRef, type Ref } from 'vue'
+import { ref, computed, isRef, shallowRef, triggerRef, customRef, type Ref } from 'vue'
 import type { PartialDeep, Paths, Get } from 'type-fest'
 import get from 'lodash/get'
 import set from 'lodash/set'
@@ -62,14 +62,39 @@ export function model<
 ) {
   options ??= {}
   const { validator, initializer } = options
-  const inObj = (
-    isRef(initialValue)
-      ? initialValue
-      : shallowRef(initialValue)
-  ) as Ref<PartialDeep<T>>
+  const valueIsRef = isRef(initialValue)
 
   /** Create starting object structure */
-  inObj.value = merge(inObj.value ?? {}, initializer?.())
+  let initialObj = merge(
+    (valueIsRef ? initialValue.value : initialValue) ?? {},
+    initializer?.()
+  )
+
+  if (valueIsRef) {
+    /** Sync merged object */
+    initialValue.value = initialObj
+  }
+
+  let gettingSubPath = false
+
+  /** Allows reading sub-paths without creating recursive dependencies */
+  const inObj = customRef((track, trigger) => ({
+    get() {
+      if (gettingSubPath) {
+        return initialObj
+      }
+      track()
+      return initialObj
+    },
+    set(value: any) {
+      initialObj = value
+      if (valueIsRef) {
+        /** Sync outgoing value */
+        initialValue.value = value
+      }
+      trigger()
+    }
+  }))
 
   const outObj = shallowRef<GetValueType<T>>()
   const errors = ref<Record<string, string | undefined>>({})
@@ -127,7 +152,12 @@ export function model<
   }
 
   const createAccessors = (path: string) => {
-    const getValue = () => get(inObj.value, path)
+    const getValue = () => {
+      gettingSubPath = true
+      const val = get(inObj.value, path)
+      gettingSubPath = false
+      return val
+    }
     const setValue = (value: any) => {
       set(inObj.value, path, value)
       triggerRef(inObj)

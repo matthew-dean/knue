@@ -1,4 +1,4 @@
-import { object, string, number } from 'valibot'
+import { object, string, number, array } from 'valibot'
 
 export const schema = object({
   name: string(),
@@ -6,5 +6,8 @@ export const schema = object({
   address: object({
     city: string(),
     state: string()
-  })
+  }),
+  destinations: array(object({
+    place: number()
+  }))
 })

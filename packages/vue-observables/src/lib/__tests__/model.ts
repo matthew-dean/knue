@@ -3,8 +3,8 @@ import {
   model
 } from '../model'
 import { createValidator } from '../../adapters/valibot'
-import { object, string, number, type InferOutput } from 'valibot'
-import { watch } from 'vue'
+import { object, string, number, type InferOutput, array } from 'valibot'
+import { reactive, watch, nextTick, ref } from 'vue'
 import { flushPromises, mount, type DOMWrapper } from '@vue/test-utils'
 import Component from './__helpers/component.vue'
 
@@ -30,10 +30,22 @@ describe('Model API', () => {
   test('validation', async () => {
     const schema = object({
       name: string(),
-      age: number()
+      age: number(),
+      destinations: array(object({
+        place: number()
+      }))
     })
     type MyModel = InferOutput<typeof schema>
-    const state = model<MyModel>({}, {
+    const existingRef = ref<Partial<MyModel>>({
+      name: 'John',
+      destinations: [
+        { place: 1 },
+        { place: 2 },
+        { place: 3 }
+      ]
+    })
+
+    const state = model<MyModel>(existingRef, {
       validator: createValidator(schema),
       validateOnMount: true
     })
@@ -42,15 +54,61 @@ describe('Model API', () => {
     expect(state.validatedValue).toBeUndefined()
     state('name').value = 'John'
     state('age').value = 30
-    expect(state()).toEqual({ name: 'John', age: 30 })
+    const destinations = state('destinations')
+    // state('destinations').value = []
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    destinations.value
+    expect(state()).toEqual({
+      name: 'John',
+      age: 30,
+      destinations: [
+        { place: 1 },
+        { place: 2 },
+        { place: 3 }
+      ]
+    })
+    let existingRefChangeDetected = false
+    let internalRefChangeDetected = false
+    watch(() => existingRef.value.destinations, value => {
+      existingRefChangeDetected = true
+      expect(value).toEqual([])
+    })
+    watch(() => destinations.value, value => {
+      internalRefChangeDetected = true
+      expect(value).toEqual([])
+    })
+    destinations.value = []
     state.validate()
     await flushPromises()
+    await nextTick()
     expect(state.isValid).toBe(true)
-    expect(state.validatedValue).toEqual({ name: 'John', age: 30 })
+    expect(state.validatedValue).toEqual({
+      name: 'John',
+      age: 30,
+      destinations: []
+    })
+    expect(existingRef.value).toEqual({
+      name: 'John',
+      age: 30,
+      destinations: []
+    })
+    expect(existingRefChangeDetected).toBe(true)
+    expect(internalRefChangeDetected).toBe(true)
   })
 
   test('component binding', async () => {
-    const wrapper = mount(Component, { props: { modelValue: { name: 'barney' } } })
+    const wrapper = mount(Component, {
+      props: {
+        modelValue: reactive({
+          name: 'barney',
+          destinations: [
+            { place: 1 },
+            { place: 2 },
+            { place: 3 }
+          ]
+        })
+      }
+    })
     const nameInput: DOMWrapper<HTMLInputElement> = wrapper.find('input[data-testid="name-input"]')
     const ageInput: DOMWrapper<HTMLInputElement> = wrapper.find('input[data-testid="age-input"]')
     nameInput.element.value = 'barney'

@@ -13,6 +13,8 @@ const vm = model<ViewModel>(modelValue, {
   validator: createValidator(schema),
   initializer: createInitializer(schema)
 })
+
+const destinations = vm('destinations')
 </script>
 
 <template>
@@ -50,6 +52,12 @@ const vm = model<ViewModel>(modelValue, {
     </div>
   </div>
   <Address v-model="vm('address').value" />
+  <div
+    v-for="(destination, key) in destinations.value"
+    :key
+  >
+    <label data-testid="destination">{{ destination.place }}</label>
+  </div>
   <button
     data-testid="main-submit"
     type="button"
