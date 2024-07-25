@@ -13,6 +13,9 @@ describe('Model API', () => {
     interface MyModel {
       name: string
       age: number
+      nested?: {
+        foo: string
+      }
     }
     const state = model<MyModel>({})
     watch(state('name').ref, name => {
@@ -26,6 +29,26 @@ describe('Model API', () => {
     await flushPromises()
     expect(state()).toEqual({ name: 'John', age: 30 })
     expect(state('age')()).toBe(30)
+  })
+
+  test('nested reactivity', async () => {
+    interface MyModel {
+      nested: {
+        foo: string
+      }
+    }
+    const state = model<MyModel>({
+      nested: { foo: '' }
+    })
+    let watchTriggered = false
+    watch(() => state('nested').value.foo, name => {
+      watchTriggered = true
+      expect(name).toBe('bar')
+    })
+    state('nested').value.foo = 'bar'
+    await flushPromises()
+    expect(state()).toEqual({ nested: { foo: 'bar' } })
+    expect(watchTriggered).toBe(true)
   })
 
   test('validation', async () => {
