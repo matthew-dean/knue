@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { ref, computed, isRef, shallowRef, triggerRef, customRef, type Ref, reactive } from 'vue'
+import { ref, computed, isRef, shallowRef, triggerRef, customRef, type Ref, reactive, toRaw } from 'vue'
 import type { PartialDeep, Paths, Get } from 'type-fest'
 import get from 'lodash/get'
 import set from 'lodash/set'
@@ -68,9 +68,9 @@ export function model<
 
   /** Create starting object structure */
   let initialObj = reactive(merge(
-    (valueIsRef ? initialValue.value : initialValue) ?? {},
+    (valueIsRef ? toRaw(initialValue as Ref<PartialDeep<T>> | Ref<unknown>).value : initialValue) ?? {},
     initializer?.()
-  ))
+  )) as PartialDeep<T>
 
   if (valueIsRef) {
     /** Sync merged object */
