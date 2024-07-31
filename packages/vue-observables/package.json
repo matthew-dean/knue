@@ -1,9 +1,8 @@
 {
   "name": "vue-observables",
-  "version": "1.0.0-beta.9",
+  "version": "1.0.0-beta.10",
   "description": "Knockout-like functional syntax for Vue.js",
   "license": "MIT",
-  "type": "module",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
