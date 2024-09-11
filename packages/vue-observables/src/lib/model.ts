@@ -60,6 +60,12 @@ export function model<
     validator?: (data: unknown, path: string) => ([ValidationError, null | undefined] | [null | undefined, any]) | Promise<([ValidationError, null | undefined] | [null | undefined, any])>
     /** @default false */
     validateOnMount?: boolean
+    /**
+     * Runs validator for every change to the model,
+     * without needing to be explicitly called or
+     * hooked to onChange events.
+     */
+    validateOnChange?: boolean
   }
 ) {
   options ??= {}
@@ -103,7 +109,11 @@ export function model<
   const error = computed(() => {
     return Object.values(errors.value)[0]
   })
-  const modelValid = computed(() => Object.values(errors.value).length === 0)
+
+  /** Make sure any errors set to `undefined` don't count */
+  const modelValid = computed(() => Object.values(errors.value)
+    .filter(val => val !== undefined)
+    .length === 0)
 
   const processValidation = async (data: any, path: string = '') => {
     /** Validating the root means wiping all errors */
@@ -168,6 +178,9 @@ export function model<
       set(inObj.value, path, value)
       triggerRef(inObj)
       touchedSet.add(path)
+      if (options.validateOnChange) {
+        void processValidation(value, path)
+      }
     }
 
     const refObj = {

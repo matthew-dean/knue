@@ -120,6 +120,35 @@ describe('Model API', () => {
     expect(internalRefChangeDetected).toBe(true)
   })
 
+  test('onchange validation', async () => {
+    const schema = object({
+      name: string(),
+      age: number()
+    })
+    type MyModel = InferOutput<typeof schema>
+    const myModel: Partial<MyModel> = {
+      name: 'John'
+    }
+    const state = model<MyModel>(myModel, {
+      validator: createValidator(schema),
+      validateOnChange: true
+    })
+
+    await flushPromises()
+    /** We haven't run the validator yet */
+    expect(state.isValid).toBe(true)
+    state.validate()
+
+    await flushPromises()
+    expect(state.errors.age).toBeTruthy()
+    expect(state.isValid).toBe(false)
+    state('age').value = 30
+
+    await flushPromises()
+    expect(state.errors.age).toBeFalsy()
+    expect(state.isValid).toBe(true)
+  })
+
   test('component binding', async () => {
     const wrapper = mount(Component, {
       props: {

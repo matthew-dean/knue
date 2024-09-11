@@ -7,27 +7,38 @@ import MyViewModel from './MyViewModel'
 defineViewModel(MyViewModel)
 </script>
 <!-- or? -->
-<script src="./MyViewModel" />
+<script viewmodel src="./MyViewModel" />
 
 <script lang="ts">
 export default class MyViewModel extends ViewModel {
 }
 </script>
+
+<template>
+  {#with obj}
+    {#for foo [bar]}
+      {#if cond}
+        <span value={}>{personName}</span>
+      {/if}
+      {#elseif cond}
+        
+      {/elseif}
+    {/for}
+  {/with}
+</template>
 ```
 ```ts
 import { ViewModel, observable } from '~/knue.config'
 import MyComponent from './component.vue'
 
-export default class MyViewModel extends ViewModel {
+interface Props {
+  name: string
+  age: number
+}
+
+export default class MyViewModel extends ViewModel<Props> {
   num = observable(1)
 
-  static components = {
-    MyComponent
-  }
-  static props: {
-    name: string
-    age: number
-  }
   static emits: {
     change(): void
   }
