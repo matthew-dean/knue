@@ -178,7 +178,7 @@ export function model<
       set(inObj.value, path, value)
       triggerRef(inObj)
       touchedSet.add(path)
-      if (options.validateOnChange) {
+      if (options!.validateOnChange) {
         void processValidation(value, path)
       }
     }
@@ -337,7 +337,8 @@ export function model<
     }
   })
 
-  if (validator && options.validateOnMount) {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+  if (validator && options!.validateOnMount) {
     void processValidation(inObj.value, '')
   }
 
