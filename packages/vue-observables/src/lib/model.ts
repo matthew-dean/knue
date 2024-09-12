@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { ref, computed, isRef, shallowRef, triggerRef, customRef, type Ref, reactive, toRaw } from 'vue'
+import { ref, computed, isRef, shallowRef, triggerRef, customRef, type Ref, reactive, toRaw, watch } from 'vue'
 import type { PartialDeep, Paths, Get } from 'type-fest'
+/** Switch to https://github.com/developit/dlv */
 import get from 'lodash/get'
+/** Switch to https://github.com/lukeed/dset */
 import set from 'lodash/set'
 import isObject from 'lodash/isObject'
 import merge from 'lodash/merge'
@@ -104,6 +106,16 @@ export function model<
     }
   }))
 
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+  if (options!.validateOnChange) {
+    /**
+     * @todo - Find a more efficient way than a deep watcher
+     */
+    watch(inObj, () => {
+      void processValidation(inObj.value)
+    }, { deep: true })
+  }
+
   const outObj = shallowRef<GetValueType<T>>()
   const errors = ref<Record<string, string | undefined>>({})
   const error = computed(() => {
@@ -178,10 +190,6 @@ export function model<
       set(inObj.value, path, value)
       triggerRef(inObj)
       touchedSet.add(path)
-      if (options!.validateOnChange && validator) {
-        flaggedSet.add(path)
-        void processValidation(value, path)
-      }
     }
 
     const refObj = {

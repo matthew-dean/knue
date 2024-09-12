@@ -123,11 +123,17 @@ describe('Model API', () => {
   test('onchange validation', async () => {
     const schema = object({
       name: string(),
-      age: number()
+      age: number(),
+      destination: object({
+        street: string()
+      })
     })
     type MyModel = InferOutput<typeof schema>
     const myModel: Partial<MyModel> = {
-      name: 'John'
+      name: 'John',
+      destination: {
+        street: '123 Main St'
+      }
     }
     const state = model<MyModel>(myModel, {
       validator: createValidator(schema),
@@ -146,6 +152,18 @@ describe('Model API', () => {
 
     await flushPromises()
     expect(state.errors.age).toBeFalsy()
+    expect(state.isValid).toBe(true)
+
+    /** Trigger validation on object deep-setting */
+    // @ts-expect-error - illegal value
+    state('destination').value.street = undefined
+    await flushPromises()
+    expect(state.errors['destination.street']).toBeTruthy()
+    expect(state.isValid).toBe(false)
+
+    state('destination').value.street = 'Restored'
+    await flushPromises()
+    expect(state.errors['destination.street']).toBeFalsy()
     expect(state.isValid).toBe(true)
   })
 
