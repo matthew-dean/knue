@@ -18,7 +18,7 @@ export const createValidator: ValidationFunction = function<
       const validationError = new ValidationError(result.issues[0].message)
       for (const issue of result.issues) {
         const dotPath = getDotPath(issue)
-        const path = initialPath + `${dotPath ? '.' + dotPath : ''}`
+        const path = [initialPath, dotPath].filter(Boolean).join('.')
         if (path) {
           validationError.errors[path] = issue.message
         }
