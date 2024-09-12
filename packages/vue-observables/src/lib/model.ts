@@ -178,7 +178,8 @@ export function model<
       set(inObj.value, path, value)
       triggerRef(inObj)
       touchedSet.add(path)
-      if (options!.validateOnChange) {
+      if (options!.validateOnChange && validator) {
+        flaggedSet.add(path)
         void processValidation(value, path)
       }
     }
