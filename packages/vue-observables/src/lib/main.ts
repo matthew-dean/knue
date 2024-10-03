@@ -20,7 +20,7 @@ export interface Subscribable<T> {
   value: T
   dispose(): void
   subscribe(
-    callback: (newValue: T) => void | Promise<void>,
+    callback: (newValue: T) => unknown | Promise<unknown>,
     callbackTarget?: any,
     /** Un-used */
     event?: string
