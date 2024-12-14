@@ -13,7 +13,7 @@ import { ReactiveFlags } from './constants'
 export interface BaseModel<T extends Record<string, any>> {
   value: PartialDeep<T>
   readonly ref: Ref<T>
-  readonly errors: Record<string, string | undefined>
+  errors: Record<string, string | undefined>
   /** First error */
   readonly error: string | undefined
   readonly touched: boolean
