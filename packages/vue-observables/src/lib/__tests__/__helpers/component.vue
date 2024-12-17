@@ -15,6 +15,11 @@ const vm = model<ViewModel>(modelValue, {
 })
 
 const destinations = vm('destinations')
+
+defineEmits<{
+  change: [e: Event]
+  input: [e: Event]
+}>()
 </script>
 
 <template>
@@ -26,6 +31,8 @@ const destinations = vm('destinations')
     <input
       data-testid="name-input"
       v-model="name.value"
+      @change="$emit('change', $event)"
+      @input="$emit('input', $event)"
     />
     <div
       v-if="name.error"

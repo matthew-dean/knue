@@ -168,25 +168,52 @@ describe('Model API', () => {
   })
 
   test('component binding', async () => {
+    const myModel = {
+      model: {
+        name: 'barney',
+        destinations: [
+          { place: 1 },
+          { place: 2 },
+          { place: 3 }
+        ]
+      }
+    }
+    const state = model(myModel, {
+      validateOnChange: true
+    })
+
+    const onChange = vi.fn()
+    const onInput = vi.fn()
+
     const wrapper = mount(Component, {
       props: {
-        modelValue: reactive({
-          name: 'barney',
-          destinations: [
-            { place: 1 },
-            { place: 2 },
-            { place: 3 }
-          ]
-        })
+        modelValue: state('model').value,
+        'onUpdate:modelValue': value => {
+          // @ts-expect-error - cast as partial
+          state('model').value = value
+        },
+        onInput() {
+          state('model').onChange()
+          onChange()
+        },
+        onChange() {
+          state('model').onChange()
+          onInput()
+        }
       }
     })
+
     const nameInput: DOMWrapper<HTMLInputElement> = wrapper.find('input[data-testid="name-input"]')
     const ageInput: DOMWrapper<HTMLInputElement> = wrapper.find('input[data-testid="age-input"]')
-    nameInput.element.value = 'barney'
+    await nameInput.setValue('barney')
+
     let button: DOMWrapper<HTMLButtonElement> = wrapper.find('button[data-testid="main-submit"]')
     button.element.click()
     await flushPromises()
     expect(nameInput.element.value).toBe('barney')
+    state('model').validate()
+    expect(onChange).toHaveBeenCalledTimes(1)
+    expect(onInput).toHaveBeenCalledTimes(1)
     expect(wrapper.find('[data-testid="name-error"]').exists()).toBe(false)
     /** The model doesn't have age defined. */
     expect(wrapper.find('[data-testid="age-error"]').exists()).toBe(true)

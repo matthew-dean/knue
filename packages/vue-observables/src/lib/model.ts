@@ -253,24 +253,29 @@ export function model<
       },
       onInput: {
         enumerable: true,
-        value() {
+        get() {
           const self: any = observable
-          if (self.error ?? isFlagged(path)) {
-            self.validate()
+          return () => {
+            if (self.error ?? isFlagged(path)) {
+              self.validate()
+            }
           }
         }
       },
       onChange: {
         enumerable: true,
         get() {
-          if (touchedSet.has(path)) {
-            (observable as any).validate()
+          const self: any = observable
+          return () => {
+            if (touchedSet.has(path)) {
+              self.validate()
+            }
           }
         }
       },
       validate: {
         enumerable: true,
-        get() {
+        value() {
           if (validator) {
             flaggedSet.add(path)
             void processValidation(get(inObj.value, path), path)
