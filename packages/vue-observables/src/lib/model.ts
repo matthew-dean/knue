@@ -10,6 +10,23 @@ import merge from 'lodash/merge'
 import type { ValidationError } from './validation'
 import { ReactiveFlags } from './constants'
 
+export interface Field<T = unknown> {
+  value: T
+  ref: Ref<T>
+  readonly error: string | undefined
+  readonly isValid: boolean
+  readonly touched: boolean
+  readonly bind: {
+    input: () => void
+    change: () => void
+  }
+  readonly onInput: () => void
+  readonly onChange: () => void
+  readonly validate: () => void
+  (): T
+  (value: T): void
+}
+
 export interface BaseModel<T extends Record<string, any>> {
   value: PartialDeep<T>
   readonly ref: Ref<T>
@@ -21,25 +38,10 @@ export interface BaseModel<T extends Record<string, any>> {
   readonly validatedValue: T | undefined
   readonly validate: () => void
   (): PartialDeep<T>
-  <U extends Exclude<Paths<T>, number>>(path: U): {
-    value: Get<T, U>
-    ref: Ref<Get<T, U>>
-    readonly error: string | undefined
-    readonly isValid: boolean
-    readonly touched: boolean
-    readonly bind: {
-      input: () => void
-      change: () => void
-    }
-    readonly onInput: () => void
-    readonly onChange: () => void
-    readonly validate: () => void
-    (): Get<T, U>
-    (value: Get<T, U>): void
-  }
+  <U extends Exclude<Paths<T>, number>>(path: U): Field<Get<T, U>>
 }
 
-type Model<T extends Record<string, any>> = BaseModel<T> & ({
+export type Model<T extends Record<string, any>> = BaseModel<T> & ({
   readonly isValid: true
   validatedValue: T
 } | {
