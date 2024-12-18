@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from 'vitest'
-import { pipe, object, string, minLength, maxLength, forward, partialCheck, type InferOutput } from 'valibot'
+import { pipe, object, string, minLength, maxLength, forward, partialCheck, type InferOutput, type PartialCheckIssue } from 'valibot'
 import { createValidator } from '../valibot'
 import { model, type Model } from '../../lib/model'
 import { flushPromises } from '@vue/test-utils'
@@ -9,7 +9,13 @@ const FormSchema = pipe(
     password: pipe(string(), minLength(6), maxLength(18)),
     confirmPassword: string()
   }),
-  forward(
+  forward<{
+    password: string
+    confirmPassword: string
+  }, PartialCheckIssue<{
+    password: string
+    confirmPassword: string
+  }>>(
     partialCheck(
       [['password'], ['confirmPassword']],
       input => input.password === input.confirmPassword,
