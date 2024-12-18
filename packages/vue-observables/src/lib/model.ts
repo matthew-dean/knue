@@ -22,7 +22,7 @@ export interface Field<T = unknown> {
   }
   readonly onInput: () => void
   readonly onChange: () => void
-  readonly validate: () => void
+  readonly validate: () => Promise<undefined | string>
   (): T
   (value: T): void
 }
@@ -36,7 +36,7 @@ export interface BaseModel<T extends Record<string, any>> {
   readonly touched: boolean
   readonly isValid: boolean
   readonly validatedValue: T | undefined
-  readonly validate: () => void
+  readonly validate: () => Promise<undefined | Record<string, string | undefined>>
   (): PartialDeep<T>
   <U extends Exclude<Paths<T>, number>>(path: U): Field<Get<T, U>>
 }
@@ -129,7 +129,9 @@ export function model<
     .filter(val => val !== undefined)
     .length === 0)
 
-  const processValidation = async (data: any, path: string = '') => {
+  async function processValidation(data: any): Promise<undefined | Record<string, string | undefined>>
+  async function processValidation(data: any, path: string): Promise<undefined | string>
+  async function processValidation(data: any, path: string = '') {
     /** Validating the root means wiping all errors */
     if (!path) {
       errors.value = {}
@@ -152,15 +154,25 @@ export function model<
       outObj.value = result
     } catch (err) {
       outObj.value = undefined
+      let unknownError = false
+      let currentErrors: any
       if (isObject(err)) {
         if ('errors' in err && isObject(err.errors)) {
-          errors.value = { ...errors.value, ...err.errors }
+          currentErrors = err.errors
         } else if ('message' in err && typeof err.message === 'string') {
-          errors.value = { ...errors.value, UNKNOWN: err.message }
+          currentErrors = { UNKNOWN: err.message }
+          unknownError = true
         }
       } else {
-        errors.value = { ...errors.value, UNKNOWN: 'An unknown error occurred' }
+        currentErrors = { UNKNOWN: 'An unknown error occurred' }
+        unknownError = true
       }
+      errors.value = { ...errors.value, ...currentErrors }
+      return path
+        ? (
+            unknownError ? currentErrors.UNKNOWN : currentErrors[path]
+          )
+        : currentErrors
     }
   }
 
@@ -275,10 +287,10 @@ export function model<
       },
       validate: {
         enumerable: true,
-        value() {
+        value: async () => {
           if (validator) {
             flaggedSet.add(path)
-            void processValidation(get(inObj.value, path), path)
+            return await processValidation(inObj.value, path)
           }
         }
       }
@@ -317,7 +329,7 @@ export function model<
     validate: {
       enumerable: true,
       value() {
-        void processValidation(inObj.value)
+        return processValidation(inObj.value)
       }
     },
     validatedValue: {
